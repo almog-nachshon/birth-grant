@@ -10,7 +10,9 @@
     "lint": "next lint",
     "test": "node --test lib/engine/*.test.ts",
     "validate:content": "node content/validate.mjs",
-    "check": "npm run validate:content && npm run test"
+    "check": "npm run validate:content && npm run test",
+    "check:env": "node scripts/check-env.mjs",
+    "seed": "node --env-file=.env.local scripts/seed.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",
