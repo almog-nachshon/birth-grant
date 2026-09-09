@@ -1,0 +1,32 @@
+name: בדיקות
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # 22.18+ מריץ TypeScript ישירות, בלי שלב בנייה לבדיקות
+          node-version: '22.18'
+          cache: npm
+
+      - run: npm ci
+
+      - name: ולידציית תוכן
+        # נכשל אם משימה מפנה לשיעור שלא קיים, או אם כלל תאריך שבור
+        run: npm run validate:content
+
+      - name: בדיקות מנוע החישוב
+        run: npm test
+
+      - name: בנייה
+        # ללא משתני סביבה — כך מתנהגת פריסה ראשונה
+        run: npm run build
