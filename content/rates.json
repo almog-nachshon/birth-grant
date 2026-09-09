@@ -1,0 +1,226 @@
+{
+  "$comment": "טבלת שיעורים וסכומים. כל ערך שמשתנה מעת לעת חי כאן ולא בתוך טקסט. הטקסטים בקטלוג מפנים לערכים האלה בהצבה {{key}}. עדכון שנתי = הוספת רשומה חדשה עם effective_from, בלי לגעת בקוד או בתוכן.",
+  "currency": "ILS",
+  "rates": [
+    {
+      "key": "birth_grant_first_child",
+      "value": 2103,
+      "unit": "ILS",
+      "effective_from": "2026-01-01",
+      "label": "מענק לידה — ילד ראשון"
+    },
+    {
+      "key": "birth_grant_second_child",
+      "value": 946,
+      "unit": "ILS",
+      "effective_from": "2026-01-01",
+      "label": "מענק לידה — ילד שני",
+      "confidence": "verified"
+    },
+    {
+      "key": "birth_grant_third_plus",
+      "value": 631,
+      "unit": "ILS",
+      "effective_from": "2026-01-01",
+      "label": "מענק לידה — ילד שלישי ואילך",
+      "confidence": "verified"
+    },
+    {
+      "key": "birth_grant_twins",
+      "value": 10514,
+      "unit": "ILS",
+      "effective_from": "2026-01-01",
+      "label": "מענק לידה — תאומים"
+    },
+    {
+      "key": "maternity_daily_cap",
+      "value": 1655,
+      "unit": "ILS",
+      "effective_from": "2026-01-01",
+      "label": "תקרת דמי לידה ליום"
+    },
+    {
+      "key": "maternity_full_salary_ceiling",
+      "value": 49000,
+      "unit": "ILS",
+      "effective_from": "2026-01-01",
+      "label": "שכר ברוטו חודשי שעדיו מקבלים 100%",
+      "confidence": "approx"
+    },
+    {
+      "key": "maternity_total_weeks",
+      "value": 15,
+      "unit": "weeks",
+      "effective_from": "2020-01-01",
+      "label": "סה\"כ שבועות דמי לידה (מכסה משותפת)"
+    },
+    {
+      "key": "birthing_parent_min_weeks",
+      "value": 6,
+      "unit": "weeks",
+      "effective_from": "2020-01-01",
+      "label": "מינימום שבועות חובה ליולדת"
+    },
+    {
+      "key": "legal_leave_max_weeks",
+      "value": 26,
+      "unit": "weeks",
+      "effective_from": "2020-01-01",
+      "label": "חופשת לידה מלאה בוותק 12 חודשים"
+    },
+    {
+      "key": "unpaid_leave_weeks",
+      "value": 11,
+      "unit": "weeks",
+      "effective_from": "2020-01-01",
+      "label": "שבועות חל\"ת אחרי התשלום"
+    },
+    {
+      "key": "qualify_half_months",
+      "value": 6,
+      "unit": "months",
+      "effective_from": "2020-01-01",
+      "label": "חודשי ביטוח מתוך 14 לזכאות חלקית"
+    },
+    {
+      "key": "qualify_half_weeks",
+      "value": 7,
+      "unit": "weeks",
+      "effective_from": "2020-01-01",
+      "label": "שבועות בזכאות חלקית"
+    },
+    {
+      "key": "qualify_full_months_14",
+      "value": 10,
+      "unit": "months",
+      "effective_from": "2020-01-01",
+      "label": "חודשי ביטוח מתוך 14 לזכאות מלאה"
+    },
+    {
+      "key": "qualify_full_months_22",
+      "value": 15,
+      "unit": "months",
+      "effective_from": "2020-01-01",
+      "label": "חודשי ביטוח מתוך 22 לזכאות מלאה"
+    },
+    {
+      "key": "sick_accrual_per_month",
+      "value": 1.5,
+      "unit": "days",
+      "effective_from": "2020-01-01",
+      "label": "צבירת ימי מחלה לחודש"
+    },
+    {
+      "key": "sick_max_per_year",
+      "value": 18,
+      "unit": "days",
+      "effective_from": "2020-01-01",
+      "label": "תקרת צבירה שנתית"
+    },
+    {
+      "key": "sick_max_total",
+      "value": 90,
+      "unit": "days",
+      "effective_from": "2020-01-01",
+      "label": "תקרת צבירה מצטברת"
+    },
+    {
+      "key": "work_days_per_month",
+      "value": 21.66,
+      "unit": "days",
+      "effective_from": "2020-01-01",
+      "label": "ימי עבודה בחודש לחישוב שווי יום"
+    },
+    {
+      "key": "hmo_hotel_daily_cap",
+      "value": 259,
+      "unit": "ILS",
+      "effective_from": "2026-01-01",
+      "label": "תקרת החזר מלונית ליום",
+      "scope": "meuhedet_sia"
+    },
+    {
+      "key": "hmo_hotel_pct",
+      "value": 75,
+      "unit": "%",
+      "effective_from": "2026-01-01",
+      "label": "אחוז החזר מלונית",
+      "scope": "meuhedet_sia"
+    },
+    {
+      "key": "pregnancy_basket",
+      "value": 2000,
+      "unit": "ILS",
+      "effective_from": "2026-01-01",
+      "label": "סל הריון ולידה (חד-פעמי להריון)",
+      "scope": "meuhedet_sia"
+    },
+    {
+      "key": "pregnancy_basket_max_uses",
+      "value": 4,
+      "unit": "count",
+      "effective_from": "2026-01-01",
+      "label": "מספר הריונות מקסימלי לסל",
+      "scope": "meuhedet_sia"
+    },
+    {
+      "key": "self_employed_maintenance_pct",
+      "value": 25,
+      "unit": "%",
+      "effective_from": "2020-01-01",
+      "label": "היקף פעילות תחזוקה מותרת לעצמאי/ת"
+    },
+    {
+      "key": "form_360_deadline_months",
+      "value": 12,
+      "unit": "months",
+      "effective_from": "2020-01-01",
+      "label": "מועד אחרון להגשת טופס 360 מהפסקת העבודה"
+    },
+    {
+      "key": "form_355_early_weeks",
+      "value": 9,
+      "unit": "weeks",
+      "effective_from": "2020-01-01",
+      "label": "מוקדם ביותר להגשת טופס 355 לפני הלידה"
+    },
+    {
+      "key": "disability_full_with_spouse",
+      "value": 6229,
+      "unit": "ILS",
+      "effective_from": "2026-01-01",
+      "label": "קצבת נכות כללית — אי כושר מלא עם תוספת בן/בת זוג",
+      "confidence": "approx"
+    },
+    {
+      "key": "mod_child_supplement",
+      "value": null,
+      "unit": "ILS",
+      "effective_from": "2026-01-01",
+      "label": "תוספת ילד לנכי צה\"ל בדרגה 66%-100%",
+      "confidence": "needs_verification",
+      "note": "דווח כ-3,830 ₪ אך המונח והסכום טעונים אימות מול אגף השיקום"
+    },
+    {
+      "key": "mod_pregnancy_months_before",
+      "value": 3,
+      "unit": "months",
+      "effective_from": "2020-01-01",
+      "label": "חודשי הריון אחרונים המזכים בתגמול צרכים מיוחדים"
+    },
+    {
+      "key": "mod_pregnancy_months_after",
+      "value": 6,
+      "unit": "months",
+      "effective_from": "2020-01-01",
+      "label": "חודשים אחרי לידה המזכים בתגמול צרכים מיוחדים"
+    },
+    {
+      "key": "mod_child_supplement_max_age",
+      "value": 15,
+      "unit": "years",
+      "effective_from": "2020-01-01",
+      "label": "גיל ילד מקסימלי לתוספת אגף השיקום"
+    }
+  ]
+}

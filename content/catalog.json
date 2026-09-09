@@ -1,0 +1,602 @@
+{
+  "version": "2026.2.0",
+  "locale": "he",
+  "$comment": "קטלוג הזכויות. שני צירים עצמאיים: role (מי ההורה) ו-applies_when.employment (סוג העסקה). כל שילוב מייצר רשימת משימות אחרת. סכומים מוצבים מ-rates.json בתבנית {{key}}.",
+  "phases": [
+    {
+      "key": "before_birth",
+      "title": "לפני הלידה",
+      "sort": 1
+    },
+    {
+      "key": "claim_birthing",
+      "title": "תביעת דמי לידה — יולדת (355)",
+      "sort": 2
+    },
+    {
+      "key": "claim_partner",
+      "title": "תביעת דמי לידה — מחליף (360)",
+      "sort": 3
+    },
+    {
+      "key": "first_days",
+      "title": "הימים הראשונים אחרי הלידה",
+      "sort": 4
+    },
+    {
+      "key": "during_leave",
+      "title": "בזמן החופשה",
+      "sort": 5
+    },
+    {
+      "key": "health_insurance",
+      "title": "ביטוח בריאות ומלונית",
+      "sort": 6
+    },
+    {
+      "key": "after_return",
+      "title": "חזרה לעבודה ומעקב",
+      "sort": 7
+    },
+    {
+      "key": "disability",
+      "title": "נכות — זכויות נוספות",
+      "sort": 8
+    }
+  ],
+  "tasks": [
+    {
+      "key": "check_eligibility_birthing",
+      "phase": "before_birth",
+      "role": "birthing_parent",
+      "sort": 10,
+      "title": "לוודא עמידה בתנאי הסף לדמי לידה",
+      "body": "{{qualify_full_months_14}} מתוך 14 חודשי ביטוח (או {{qualify_full_months_22}} מתוך 22) = זכאות מלאה. {{qualify_half_months}} מתוך 14 = זכאות חלקית בלבד, {{qualify_half_weeks}} שבועות. רצף ביטוח ממעסיק קודם נספר גם הוא.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "due_date",
+        "offset_weeks": -12,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "accountant_tax_assessment",
+      "phase": "before_birth",
+      "role": "birthing_parent",
+      "sort": 20,
+      "applies_when": {
+        "employment": "self_employed"
+      },
+      "title": "לפנות לרואה החשבון לשומת מס / דוח הכנסות",
+      "body": "דמי הלידה מחושבים לפי **הגבוה** מבין שתי שומות: ההכנסה ברבע השנה שקדם ליום הקובע, או שומת המס הקודמת לשנה שבה חל היום הקובע. הכנסה מוצהרת נמוכה ⇒ דמי לידה נמוכים, גם אם התקרה העקרונית גבוהה.",
+      "requires_doc": true,
+      "doc_hint": "שומת מס או דוח הכנסות עדכני",
+      "date_rule": {
+        "anchor": "due_date",
+        "offset_weeks": -10,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "no_debt_bituach_leumi",
+      "phase": "before_birth",
+      "role": "birthing_parent",
+      "sort": 30,
+      "applies_when": {
+        "employment": "self_employed"
+      },
+      "title": "לוודא שאין חוב פתוח לביטוח לאומי",
+      "body": "תנאי לזכאות לדמי לידה. לבדוק מול רואה החשבון או באזור האישי באתר ביטוח לאומי.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "due_date",
+        "offset_weeks": -10,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "maintenance_permit",
+      "phase": "before_birth",
+      "role": "birthing_parent",
+      "sort": 40,
+      "applies_when": {
+        "employment": "self_employed"
+      },
+      "optional": true,
+      "title": "אישור לפעילות תחזוקה מוגבלת בעסק",
+      "body": "עד {{self_employed_maintenance_pct}}% מהיקף העבודה הרגיל, לשימור העסק בזמן החופשה. **טעון אישור מראש מהסניף** — בלי אישור מוקדם זו עבודה אסורה שמסכנת את דמי הלידה.",
+      "requires_doc": true,
+      "doc_hint": "אישור הסניף לפעילות מוגבלת",
+      "date_rule": {
+        "anchor": "due_date",
+        "offset_weeks": -8,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "notify_manager",
+      "phase": "before_birth",
+      "role": "any",
+      "sort": 50,
+      "applies_when": {
+        "employment": "employee"
+      },
+      "title": "הודעה למנהל הישיר",
+      "body": "עדכון על התאריך המשוער ועל תוכנית החופשה, כולל חלוקת התקופה בין שני ההורים אם רלוונטי.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "due_date",
+        "offset_weeks": -10,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "hr_email",
+      "phase": "before_birth",
+      "role": "any",
+      "sort": 60,
+      "applies_when": {
+        "employment": "employee"
+      },
+      "title": "מייל מפורט למשאבי אנוש",
+      "body": "לבקש: מילוי חלק המעסיק בטופס התביעה, אישור על המשך הפרשות פנסיה והשתלמות בזמן החופשה, ותיאום תאריך היציאה בפועל.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "due_date",
+        "offset_weeks": -8,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "clarify_partner_return_proof",
+      "phase": "before_birth",
+      "role": "partner",
+      "sort": 70,
+      "applies_when": {
+        "partner_takes_leave": true
+      },
+      "title": "לברר מול ביטוח לאומי (*6050) איזה אישור נדרש על חזרת בן/בת הזוג לעיסוק",
+      "body": "לשכירה — מכתב מעסיק. **לעצמאית אין נוסח רשמי ברור** ויש לברר טלפונית מול הסניף לפני ההגשה. בלי המסמך הזה טופס 360 לא מטופל.",
+      "requires_doc": true,
+      "doc_hint": "אישור על חזרת בן/בת הזוג לעיסוק",
+      "critical": true,
+      "date_rule": {
+        "anchor": "due_date",
+        "offset_weeks": -6,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "form_355_fill",
+      "phase": "claim_birthing",
+      "role": "birthing_parent",
+      "sort": 100,
+      "form_ref": "355",
+      "title": "מילוי טופס 355 — תביעה לתשלום דמי לידה",
+      "body": "ניתן להגיש כבר בהריון, עד {{form_355_early_weeks}} שבועות לפני התאריך המשוער, או מיד אחרי הלידה.",
+      "requires_doc": false,
+      "source_url": "https://www.btl.gov.il/",
+      "date_rule": {
+        "anchor": "due_date",
+        "offset_weeks": -4,
+        "kind": "window_start"
+      }
+    },
+    {
+      "key": "form_355_attach_income",
+      "phase": "claim_birthing",
+      "role": "birthing_parent",
+      "sort": 110,
+      "applies_when": {
+        "employment": "self_employed"
+      },
+      "form_ref": "355",
+      "title": "צירוף שומת מס / דוח הכנסות",
+      "body": "המסמך שהתקבל מרואה החשבון. זה הנתון שקובע את גובה דמי הלידה.",
+      "requires_doc": true,
+      "doc_hint": "שומת מס / דוח הכנסות"
+    },
+    {
+      "key": "form_355_bank",
+      "phase": "claim_birthing",
+      "role": "birthing_parent",
+      "sort": 120,
+      "form_ref": "355",
+      "title": "פרטי חשבון בנק",
+      "body": "התשלום מועבר ישירות לחשבון, בהעברה אחת ולא חודש בחודשו.",
+      "requires_doc": true,
+      "doc_hint": "אישור ניהול חשבון / צילום שיק"
+    },
+    {
+      "key": "form_355_submit",
+      "phase": "claim_birthing",
+      "role": "birthing_parent",
+      "sort": 130,
+      "form_ref": "355",
+      "title": "הגשת טופס 355 בפועל",
+      "body": "אונליין באתר ביטוח לאומי, דואר, פקס או תיבת שירות בסניף. מומלץ להגיש בסמיכות זמנים לטופס 360 של בן/בת הזוג — כדי שביטוח לאומי יראה את חלוקת התקופה מראש ולא ישלם ביתר לצד הראשון.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "birth_date",
+        "offset_days": 7,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "form_360_fill",
+      "phase": "claim_partner",
+      "role": "partner",
+      "sort": 200,
+      "applies_when": {
+        "partner_takes_leave": true
+      },
+      "form_ref": "360",
+      "title": "מילוי טופס 360 — דמי לידה לבן/בת זוג מחליף/ה",
+      "body": "היולדת חייבת לקחת את {{birthing_parent_min_weeks}} השבועות הראשונים ואי אפשר לוותר עליהם. אחרי זה ניתן להעביר את **יתרת** {{maternity_total_weeks}} השבועות — כלומר עד 9 שבועות נוספים.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "birth_date",
+        "offset_days": 7,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "form_360_eligibility",
+      "phase": "claim_partner",
+      "role": "partner",
+      "sort": 205,
+      "applies_when": {
+        "partner_takes_leave": true
+      },
+      "title": "לוודא תנאי סף — נספרים ליום הפסקת העבודה, לא ליום הלידה",
+      "body": "{{qualify_full_months_14}} מתוך 14 חודשים או {{qualify_full_months_22}} מתוך 22 חודשי ביטוח שקדמו **ליום הקובע שלך** — יום הפסקת העבודה שלך, שהוא מאוחר מיום הלידה. זו טעות נפוצה בחישוב.",
+      "requires_doc": false,
+      "critical": true
+    },
+    {
+      "key": "form_360_employer_part",
+      "phase": "claim_partner",
+      "role": "partner",
+      "sort": 210,
+      "applies_when": {
+        "partner_takes_leave": true,
+        "employment": "employee"
+      },
+      "form_ref": "360",
+      "title": "אישור מעסיק — החלק שממלא HR",
+      "body": "חלק בטופס שממולא על ידי משאבי אנוש. כדאי לבקש מוקדם, זה צוואר הבקבוק הנפוץ.",
+      "requires_doc": true,
+      "doc_hint": "חלק המעסיק בטופס 360"
+    },
+    {
+      "key": "form_360_partner_return",
+      "phase": "claim_partner",
+      "role": "partner",
+      "sort": 220,
+      "applies_when": {
+        "partner_takes_leave": true
+      },
+      "form_ref": "360",
+      "title": "אישור על חזרת בן/בת הזוג לעיסוק",
+      "body": "מצורף חובה. בלעדיו הטופס לא מטופל.",
+      "requires_doc": true,
+      "doc_hint": "אישור חזרה לעיסוק",
+      "critical": true
+    },
+    {
+      "key": "form_360_bank",
+      "phase": "claim_partner",
+      "role": "partner",
+      "sort": 230,
+      "applies_when": {
+        "partner_takes_leave": true
+      },
+      "form_ref": "360",
+      "title": "פרטי חשבון בנק",
+      "requires_doc": true,
+      "doc_hint": "אישור ניהול חשבון"
+    },
+    {
+      "key": "form_360_submit",
+      "phase": "claim_partner",
+      "role": "partner",
+      "sort": 240,
+      "applies_when": {
+        "partner_takes_leave": true
+      },
+      "form_ref": "360",
+      "title": "הגשת טופס 360 בפועל",
+      "body": "לא יאוחר מ-{{form_360_deadline_months}} חודשים מיום הפסקת העבודה. עדיף בסמיכות להגשת טופס 355.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "partner_work_stop",
+        "offset_months": 12,
+        "kind": "deadline"
+      }
+    },
+    {
+      "key": "paternity_five_days",
+      "phase": "first_days",
+      "role": "partner",
+      "sort": 300,
+      "applies_when": {
+        "employment": "employee"
+      },
+      "title": "תיאום 5 ימי היעדרות ראשונים — 3 חופשה + 2 מחלה",
+      "body": "זכות **נפרדת ונוספת** למסלול ההחלפה. לפי המינימום החוקי: יום הלידה = יום מחלה ראשון (0%), 3 הימים הבאים מהחופשה השנתית (100%), 2 הימים האחרונים = ימי מחלה שני ושלישי (50% כל אחד). חוזים אישיים מיטיבים משלמים 100% מהיום הראשון — **לבדוק את המדיניות הספציפית, זה משנה מהותית את הסכום**. שווי יום = שכר חודשי ÷ {{work_days_per_month}}.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "birth_date",
+        "offset_days": 0,
+        "kind": "window_start"
+      }
+    },
+    {
+      "key": "hospital_report_check",
+      "phase": "first_days",
+      "role": "shared",
+      "sort": 310,
+      "title": "מענק לידה — לוודא הגעה לחשבון",
+      "body": "משולם אוטומטית ליולדת אחרי דיווח בית החולים לביטוח לאומי, ללא תלות בהכנסה או בסוג ההעסקה. ילד ראשון {{birth_grant_first_child}} ₪; תאומים {{birth_grant_twins}} ₪. לא דורש הגשה — רק לוודא שהגיע.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "birth_date",
+        "offset_days": 30,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "update_actual_birth_date",
+      "phase": "first_days",
+      "role": "shared",
+      "sort": 320,
+      "title": "לעדכן את תאריך הלידה בפועל",
+      "body": "כל התאריכים והתזכורות בתיק מחושבים מהתאריך המשוער עד שמעדכנים אותו. עדכון כאן מזיז את כל לוח הזמנים אוטומטית.",
+      "requires_doc": false,
+      "system": true,
+      "date_rule": {
+        "anchor": "birth_date",
+        "offset_days": 2,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "no_work_during_leave",
+      "phase": "during_leave",
+      "role": "any",
+      "sort": 400,
+      "title": "לא לעבוד בתקופת דמי הלידה — כולל לא מהבית",
+      "body": "הסיכון הוא **אובדן מלוא דמי הלידה לתקופה**, ויש תקדים משפטי. גם חלקית, גם מהבית. זה גם אסור על המעסיק לפי חוק עבודת נשים. לעצמאי/ת — החריג היחיד הוא אישור תחזוקה שהתקבל **מראש**.",
+      "requires_doc": false,
+      "critical": true
+    },
+    {
+      "key": "pension_continues",
+      "phase": "during_leave",
+      "role": "any",
+      "sort": 410,
+      "applies_when": {
+        "employment": "employee"
+      },
+      "title": "לוודא המשך הפרשות פנסיה והשתלמות",
+      "body": "זו לא חל\"ת — זו תקופה מוגנת מפיטורים והמעסיק חייב להמשיך להפריש כרגיל. לבדוק בתלוש הראשון שאחרי תחילת החופשה.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "birth_date",
+        "offset_days": 45,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "sick_days_accrual",
+      "phase": "during_leave",
+      "role": "any",
+      "sort": 420,
+      "applies_when": {
+        "employment": "employee"
+      },
+      "optional": true,
+      "title": "לדעת: צבירת ימי מחלה נמשכת בדמי לידה, ונעצרת בחל\"ת",
+      "body": "צבירה רגילה {{sick_accrual_per_month}} ימים לחודש עבודה מלא, עד {{sick_max_per_year}} בשנה, תקרה מצטברת {{sick_max_total}} ימים. בתקופת {{maternity_total_weeks}} שבועות דמי הלידה הצבירה נמשכת; בחל\"ת שאחריה — לא.",
+      "requires_doc": false
+    },
+    {
+      "key": "hmo_basket_balance",
+      "phase": "health_insurance",
+      "role": "shared",
+      "sort": 500,
+      "title": "לבדוק יתרה בסל הריון ולידה בקופת החולים",
+      "body": "בחלק מהקופות ההחזר על מלונית **נמשך מתוך** סל הריון ולידה ולא מתקציב נפרד — למשל במאוחדת שיא הסל הוא {{pregnancy_basket}} ₪ חד-פעמי להריון, עד {{pregnancy_basket_max_uses}} הריונות. לבדוק יתרה פנויה **לפני** שמזמינים מלונית.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "due_date",
+        "offset_weeks": -4,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "hotel_booking",
+      "phase": "health_insurance",
+      "role": "shared",
+      "sort": 510,
+      "title": "תיאום מלונית ליולדת",
+      "body": "במאוחדת שיא: {{hmo_hotel_pct}}% מההוצאה **בתקרה של {{hmo_hotel_daily_cap}} ₪ ליום** — התקרה היא שקובעת בפועל, לא האחוז. לבקש חשבונית מס מהמלונית לצורך ההחזר.",
+      "requires_doc": true,
+      "doc_hint": "חשבונית מס מהמלונית",
+      "date_rule": {
+        "anchor": "due_date",
+        "offset_weeks": -3,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "employer_policy_hotel",
+      "phase": "health_insurance",
+      "role": "any",
+      "sort": 520,
+      "applies_when": {
+        "has_employer_policy": true
+      },
+      "title": "לבדוק השלמת החזר מלונית מהפוליסה הקולקטיבית של המעסיק",
+      "body": "תלוי לחלוטין בתנאי הפוליסה — יש לברר מול חברת הביטוח אם מלונית מכוסה בכלל ובאיזה סכום. **ככלל אי אפשר לקבל מעל 100% מהעלות בפועל ממספר מבטחים במקביל** — לשאול במפורש אם ניתן להשלים מעבר להחזר של קופת החולים.",
+      "requires_doc": false
+    },
+    {
+      "key": "tax_credit_points",
+      "phase": "after_return",
+      "role": "shared",
+      "sort": 600,
+      "title": "עדכון נקודות זיכוי במס",
+      "body": "בדרך כלל מתעדכנות אוטומטית מחודש הלידה. לוודא מול רו\"ח או HR שהניכוי בתלוש אכן השתנה.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "birth_date",
+        "offset_months": 2,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "maternity_payment_tax",
+      "phase": "after_return",
+      "role": "shared",
+      "sort": 610,
+      "optional": true,
+      "title": "לדעת: איך ממוסים דמי הלידה",
+      "body": "מהסכום מנוכים ביטוח לאומי, ביטוח בריאות ומס הכנסה. **המס מחושב בנפרד משאר ההכנסה השנתית** ולא בהכרח לפי המדרגה השולית הרגילה — שווה בדיקה בהחזר מס בסוף השנה.",
+      "requires_doc": false
+    },
+    {
+      "key": "municipal_discounts",
+      "phase": "after_return",
+      "role": "shared",
+      "sort": 620,
+      "optional": true,
+      "title": "הנחות ארנונה ומים ברשות המקומית",
+      "body": "רישום ילד חדש עשוי לזכות בהנחה. משתנה בין רשויות — לבדוק באתר הרשות.",
+      "requires_doc": false
+    },
+    {
+      "key": "rehab_dept_grants",
+      "phase": "after_return",
+      "role": "any",
+      "sort": 630,
+      "applies_when": {
+        "idf_disabled": true
+      },
+      "optional": true,
+      "title": "אגף השיקום — מענקי משפחה",
+      "body": "לנכי צה\"ל. כדאי לברר ישירות מול אגף השיקום אם רלוונטי.",
+      "requires_doc": false
+    },
+    {
+      "key": "disability_maternity_overlap",
+      "phase": "disability",
+      "role": "any",
+      "sort": 700,
+      "applies_when": {
+        "has_disability_bl": true
+      },
+      "title": "לברר מול הסניף: מה קורה לקצבת הנכות בתקופת דמי הלידה",
+      "body": "דמי לידה מסווגים כ**גמלה מחליפת שכר**, וכך גם קצבת נכות כללית. רשימות כפל הקצבאות הרשמיות **אינן מתייחסות לצירוף הזה כלל** — לא כמותר ולא כאסור. אל תניח/י שהקצבה תימשך כרגיל.\n\nמה לשאול ב-*6050: האם הקצבה נמשכת, נעצרת או מופחתת בתקופת דמי הלידה; והאם דמי הלידה נחשבים \"הכנסה\" לעניין מנגנון ההפחתה. **לבקש את התשובה בכתב.**",
+      "requires_doc": true,
+      "doc_hint": "תשובת ביטוח לאומי בכתב",
+      "critical": true,
+      "date_rule": {
+        "anchor": "due_date",
+        "offset_weeks": -14,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "mod_special_needs_pregnancy",
+      "phase": "disability",
+      "role": "birthing_parent",
+      "sort": 710,
+      "applies_when": {
+        "has_disability_mod": true
+      },
+      "title": "תגמול צרכים מיוחדים — 3 חודשי הריון אחרונים + 6 חודשים אחרי הלידה",
+      "body": "נשים עם נכות מוכרת באגף השיקום זכאיות לתשלום ב-{{mod_pregnancy_months_before}} החודשים האחרונים להריון ובמשך {{mod_pregnancy_months_after}} חודשים לאחר הלידה, בשיעור לפי דרגת הנכות.\n\n**הבקשה אינה אוטומטית** — יש לפנות ביוזמתך לעובד/ת הרווחה המטפל/ת באגף השיקום.",
+      "requires_doc": false,
+      "critical": true,
+      "date_rule": {
+        "anchor": "due_date",
+        "offset_months": -3,
+        "kind": "window_start"
+      }
+    },
+    {
+      "key": "mod_child_supplement",
+      "phase": "disability",
+      "role": "any",
+      "sort": 720,
+      "applies_when": {
+        "has_disability_mod": true
+      },
+      "title": "תוספת ילד מאגף השיקום",
+      "body": "בעלי דרגת נכות 66%–100% עם ילד עד גיל {{mod_child_supplement_max_age}} זכאים לתוספת חודשית. הסכום המדויק טעון אימות מול האגף — לברר עם עובד/ת הרווחה מה הסכום ומתי הוא מתחיל.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "birth_date",
+        "offset_days": 30,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "mod_welfare_officer_contact",
+      "phase": "disability",
+      "role": "any",
+      "sort": 705,
+      "applies_when": {
+        "has_disability_mod": true
+      },
+      "title": "ליצור קשר עם עובד/ת הרווחה באגף השיקום",
+      "body": "באגף השיקום כמעט שום דבר לא ניתן אוטומטית — כל ההטבות מוגשות **ביוזמת הנכה** דרך עובד/ת הרווחה. שיחה אחת מוקדמת פותחת את כל שאר המשימות בפרק הזה.",
+      "requires_doc": false,
+      "date_rule": {
+        "anchor": "due_date",
+        "offset_weeks": -16,
+        "kind": "due"
+      }
+    },
+    {
+      "key": "mod_order_8031",
+      "phase": "disability",
+      "role": "any",
+      "sort": 730,
+      "applies_when": {
+        "has_disability_mod": true
+      },
+      "optional": true,
+      "title": "לברר לגבי הוראה 80.31 — מענק לידה",
+      "body": "קיימת הוראת אגף שיקום בנושא מענק לידה. הדיווח הזמין מתייחס לנכה חד-הורית, כלומר ייתכן שהתחולה מצומצמת. שווה לבקש את נוסח ההוראה המלא ולבדוק התאמה.",
+      "requires_doc": false
+    },
+    {
+      "key": "mod_family_benefits",
+      "phase": "disability",
+      "role": "any",
+      "sort": 740,
+      "applies_when": {
+        "has_disability_mod": true
+      },
+      "optional": true,
+      "title": "הטבות משפחה נוספות באגף השיקום",
+      "body": "השתתפות בגני ילדים, מענק נישואים, והשתתפות בלימודים אקדמיים לילדי נכים. לברר מה רלוונטי ומה תנאי הזכאות.",
+      "requires_doc": false
+    },
+    {
+      "key": "work_injury_disability_check",
+      "phase": "disability",
+      "role": "any",
+      "sort": 750,
+      "applies_when": {
+        "has_disability_work_injury": true
+      },
+      "title": "נכות מעבודה — לברר בנפרד מנכות כללית",
+      "body": "נכות מעבודה היא ענף נפרד עם כללי כפל גמלאות משלו, ובחלק מהמקרים היא **לא** ניתנת לשילוב עם קצבאות שנכות כללית כן משתלבת איתן. לברר מול הסניף מה חל בתקופת דמי הלידה.",
+      "requires_doc": false,
+      "critical": true
+    }
+  ]
+}
