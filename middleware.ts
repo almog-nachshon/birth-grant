@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { isSupabaseConfigured } from './lib/supabase/config.ts';
 
 /** מסלולים שדורשים התחברות. כל השאר ציבורי. */
-const PROTECTED = ['/case', '/account'];
+const PROTECTED = ['/case', '/account', '/onboarding'];
 
 export async function middleware(request: NextRequest) {
   // בלי מפתחות אין מה לאכוף — הדפים הציבוריים עדיין עובדים

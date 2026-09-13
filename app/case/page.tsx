@@ -78,7 +78,7 @@ export default async function CasePage() {
     <div className={s.shell}>
       <header className={s.header}>
         <div className={s.headerInner}>
-          <a href="/" className={s.logo}>סדר בבלגן</a>
+          <a href="/" className={s.logo}>מענקי לידה</a>
           <div className={s.headerRight}>
             <a href="/account" className={s.headerLink}>האזור האישי</a>
             <form action="/auth/signout" method="post">

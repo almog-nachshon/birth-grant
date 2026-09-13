@@ -31,6 +31,10 @@ export interface PersonRow {
   annual_self_employed_income: number | null;
   insured_months_of_14: number | null;
   insured_months_of_22: number | null;
+  insured_months_of_24: number | null;
+  phone: string | null;
+  email: string | null;
+  user_id: string | null;
   work_stop_date: string | null;
   sick_paid_from_day_one: boolean;
   input_sources: Record<string, string> | null;
@@ -50,6 +54,7 @@ export function toPersonProfile(row: PersonRow): PersonProfile {
     annualSelfEmployedIncome: opt(row.annual_self_employed_income),
     insuredMonthsOf14: opt(row.insured_months_of_14),
     insuredMonthsOf22: opt(row.insured_months_of_22),
+    insuredMonthsOf24: opt(row.insured_months_of_24),
     workStopDate: opt(row.work_stop_date),
     sickPaidFromDayOne: row.sick_paid_from_day_one,
     hasEmployerPolicy: row.has_employer_policy,
@@ -122,7 +127,16 @@ function incomeChecks(p: PersonRow): Check[] {
   return [
     { label: 'שכר ברוטו חודשי', done: p.monthly_gross != null, skip: !needsGross },
     { label: 'הכנסה שנתית לפי שומה', done: p.annual_self_employed_income != null, skip: !needsAnnual },
-    { label: 'חודשי ביטוח מתוך 14', done: p.insured_months_of_14 != null, skip: !employed },
+    // שאלה אחת. שני חלונות החוק (14 ו-22) נשארים בסכמה לערך מדויק
+    // שיגיע ממסמך, אבל אף אחד לא יודע לספור שניהם בעל פה.
+    {
+      label: 'חודשי ביטוח בשנתיים האחרונות',
+      done:
+        p.insured_months_of_24 != null ||
+        p.insured_months_of_14 != null ||
+        p.insured_months_of_22 != null,
+      skip: !employed,
+    },
     { label: 'יום הפסקת העבודה', done: p.work_stop_date != null, skip: !employed },
   ];
 }
@@ -140,6 +154,18 @@ export function personProgress(row: PersonRow, label: string): SectionProgress {
     });
   }
   return score(row.role, label, checks);
+}
+
+/** הפרופיל של המשתמש עצמו: מי הוא בתיק ואיך יוצרים איתו קשר. */
+export function profileProgress(
+  me: { fullName: string | null; phone: string | null },
+  myRole: 'birthing_parent' | 'partner' | null,
+): SectionProgress {
+  return score('profile', 'הפרופיל שלי', [
+    { label: 'שם מלא', done: Boolean(me.fullName?.trim()) },
+    { label: 'טלפון', done: Boolean(me.phone?.trim()) },
+    { label: 'מי אני בתיק', done: myRole !== null },
+  ]);
 }
 
 export function birthProgress(row: CaseRow): SectionProgress {

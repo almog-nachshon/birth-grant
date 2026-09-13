@@ -1,3 +1,4 @@
+import AccountButton from './AccountButton';
 import s from './page.module.css';
 
 export default function Landing() {
@@ -7,13 +8,13 @@ export default function Landing() {
         <div className={s.navInner}>
           <a href="/" className={s.logo}>
             <LogoMark />
-            סדר בבלגן
+            מענקי לידה
           </a>
           <div className={s.navLinks}>
             <a href="#how" className={s.navLink}>איך זה עובד</a>
             <a href="#what" className={s.navLink}>מה מקבלים</a>
             <a href="#privacy" className={s.navLink}>פרטיות</a>
-            <a href="/login" className="btn btn-primary">כניסה</a>
+            <AccountButton />
           </div>
         </div>
       </nav>
@@ -32,9 +33,8 @@ export default function Landing() {
                 ומקבלים רשימה מותאמת בדיוק אליכם: מה מגיע, כמה זה שווה, איזה טופס, ועד מתי.
               </p>
               <div className={s.heroCta}>
-                <a href="/login" className="btn btn-primary">
-                  <GoogleIcon />
-                  התחלה עם Google
+                <a href="/onboarding" className="btn btn-primary">
+                  להתחלת השאלון
                 </a>
                 <a href="/calculator" className="btn btn-ghost">
                   בדיקה מהירה בלי הרשמה
@@ -193,9 +193,8 @@ export default function Landing() {
             <p className="lede" style={{ margin: '0 auto 28px' }}>
               עשר דקות עכשיו חוסכות טפסים שחוזרים, מועדים שנסגרים וכסף שלא הוגש.
             </p>
-            <a href="/login" className="btn btn-primary">
-              <GoogleIcon />
-              התחלה עם Google
+            <a href="/onboarding" className="btn btn-primary">
+              להתחלת השאלון
             </a>
           </div>
         </section>
@@ -207,7 +206,7 @@ export default function Landing() {
             <div>
               <div className={s.logo} style={{ marginBottom: 8 }}>
                 <LogoMark />
-                סדר בבלגן
+                מענקי לידה
               </div>
               <p style={{ fontSize: 14 }}>מימוש זכויות הורות בישראל</p>
             </div>
@@ -366,16 +365,6 @@ function HeroArt() {
   );
 }
 
-function GoogleIcon() {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden>
-      <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 01-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z" />
-      <path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0012 24z" />
-      <path fill="#FBBC05" d="M5.4 14.3a7.2 7.2 0 010-4.6V6.6H1.4a12 12 0 000 10.8l4-3.1z" />
-      <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 001.4 6.6l4 3.1C6.3 6.9 8.9 4.8 12 4.8z" />
-    </svg>
-  );
-}
 
 const iconProps = {
   viewBox: '0 0 24 24',

@@ -1,0 +1,201 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: start center;
+  padding: 40px 20px 80px;
+}
+
+.card {
+  width: 100%;
+  max-width: 560px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 30px 32px 34px;
+  box-shadow: var(--shadow-lg);
+}
+
+.skip {
+  display: inline-block;
+  font-size: 13.5px;
+  color: var(--ink-faint);
+  text-decoration: none;
+  margin-bottom: 20px;
+}
+.skip:hover { color: var(--accent); }
+
+/* ── סרגל השלבים ──────────────────────────────────── */
+.steps {
+  display: flex;
+  gap: 4px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  overflow-x: auto;
+}
+.stepChip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 58px;
+}
+.stepDot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: 1.5px solid var(--line);
+  color: var(--ink-faint);
+  background: var(--paper);
+  transition: all .2s ease;
+}
+.stepLabel {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  text-align: center;
+  white-space: nowrap;
+}
+.stepChip[data-state='now'] .stepDot {
+  border-color: var(--warm);
+  background: var(--warm);
+  color: var(--on-warm);
+}
+.stepChip[data-state='now'] .stepLabel { color: var(--ink); font-weight: 600; }
+.stepChip[data-state='done'] .stepDot {
+  border-color: var(--done);
+  background: var(--done-bg);
+  color: var(--done);
+}
+
+.bar {
+  height: 4px;
+  background: var(--line-soft);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+.barFill {
+  height: 100%;
+  background: var(--warm-vivid);
+  border-radius: 99px;
+  transition: width .35s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* ── תוכן השלב ────────────────────────────────────── */
+.section { display: flex; flex-direction: column; gap: 18px; }
+.title { font-size: 26px; }
+.sub {
+  font-size: 15px;
+  color: var(--ink-soft);
+  margin-top: -8px;
+  max-width: 52ch;
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.label { font-size: 13.5px; font-weight: 600; }
+.hint { font-size: 12.5px; color: var(--ink-faint); line-height: 1.5; }
+
+.input {
+  width: 100%;
+  font: inherit;
+  font-size: 15px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--ink);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.range { width: 100%; accent-color: var(--warm-vivid); }
+.dates {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  line-height: 1.5;
+}
+.check input { margin-top: 3px; accent-color: var(--accent); width: 16px; height: 16px; }
+
+/* ── בחירת תפקיד ──────────────────────────────────── */
+.roles { display: flex; gap: 10px; flex-wrap: wrap; }
+.role {
+  flex: 1;
+  min-width: 150px;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  transition: border-color .15s ease, background .15s ease, color .15s ease;
+}
+.role:hover { border-color: var(--accent); }
+.role[data-active='true'] {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+/* ── סיכום ────────────────────────────────────────── */
+.summary {
+  list-style: none;
+  margin: 0;
+  padding: 18px 20px;
+  background: var(--bg-cool);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14.5px;
+}
+.summary strong { color: var(--accent); }
+
+.finish { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.error {
+  color: var(--alert);
+  font-size: 14px;
+  font-weight: 500;
+  background: var(--alert-bg);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-top: 16px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line-soft);
+}
+
+@media (max-width: 520px) {
+  .card { padding: 22px 18px 26px; }
+  .title { font-size: 21px; }
+  .stepLabel { display: none; }
+  .actions button { flex: 1; }
+}

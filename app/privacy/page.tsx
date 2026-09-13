@@ -1,6 +1,6 @@
 import s from '../legal.module.css';
 
-export const metadata = { title: 'מדיניות פרטיות — סדר בבלגן' };
+export const metadata = { title: 'מדיניות פרטיות — מענקי לידה' };
 
 export default function Privacy() {
   return (

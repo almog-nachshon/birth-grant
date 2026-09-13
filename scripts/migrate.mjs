@@ -38,6 +38,7 @@ const ALL = [
   'supabase/migrations/002_rls.sql',
   'supabase/migrations/003_storage.sql',
   'supabase/migrations/004_profile_inputs.sql',
+  'supabase/migrations/005_profile_contact.sql',
 ];
 
 // הרצה חלקית: npm run migrate -- 004

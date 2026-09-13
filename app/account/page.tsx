@@ -11,14 +11,17 @@ export const dynamic = 'force-dynamic';
 const CASE_COLS =
   'id, title, due_date, actual_birth_date, birth_order, multiple_birth, hmo, hotel_nights, pregnancy_basket_remaining';
 const PERSON_COLS =
-  'id, role, display_name, employment, employer_name, has_employer_policy, takes_leave, leave_weeks, monthly_gross, annual_self_employed_income, insured_months_of_14, insured_months_of_22, work_stop_date, sick_paid_from_day_one, input_sources, extra';
+  'id, role, user_id, display_name, employment, employer_name, phone, email, has_employer_policy, takes_leave, leave_weeks, monthly_gross, annual_self_employed_income, insured_months_of_14, insured_months_of_22, insured_months_of_24, work_stop_date, sick_paid_from_day_one, input_sources, extra';
 
 /** שורת הורה ריקה, לפני השמירה הראשונה. מאפשרת לרנדר את הטפסים בלי תיק. */
 function blankPerson(role: 'birthing_parent' | 'partner'): PersonRow {
   return {
     id: `new-${role}`,
     role,
+    user_id: null,
     display_name: null,
+    phone: null,
+    email: null,
     employment: 'employee',
     employer_name: null,
     has_employer_policy: false,
@@ -28,6 +31,7 @@ function blankPerson(role: 'birthing_parent' | 'partner'): PersonRow {
     annual_self_employed_income: null,
     insured_months_of_14: null,
     insured_months_of_22: null,
+    insured_months_of_24: null,
     work_stop_date: null,
     sick_paid_from_day_one: false,
     input_sources: {},
@@ -56,7 +60,7 @@ export default async function AccountPage() {
 
   const { data: profileRow } = await supabase
     .from('profiles')
-    .select('display_name, avatar_url')
+    .select('display_name, avatar_url, phone')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -107,10 +111,19 @@ export default async function AccountPage() {
   const profile = toCaseProfile(caseRow, persons);
   const entitlements = profile ? calculateEntitlements(profile, ratesAt()) : null;
 
+  // מי מההורים מקושר למשתמש המחובר. null = טרם הצהיר.
+  const myRole = persons.find((p) => p.user_id === user.id)?.role ?? null;
+
   return (
     <AccountTabs
       userName={profileRow?.display_name ?? user.email?.split('@')[0] ?? ''}
       avatarUrl={profileRow?.avatar_url ?? null}
+      me={{
+        fullName: profileRow?.display_name ?? null,
+        phone: profileRow?.phone ?? null,
+        email: user.email ?? '',
+      }}
+      myRole={myRole}
       caseRow={caseRow}
       birthing={birthing}
       partner={partner}

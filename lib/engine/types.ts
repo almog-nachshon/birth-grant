@@ -14,10 +14,16 @@ export interface PersonProfile {
   monthlyGross?: number;
   /** הכנסה שנתית לפי השומה הגבוהה מבין השתיים (עצמאי/ת) */
   annualSelfEmployedIncome?: number;
-  /** חודשי ביטוח מתוך 14 שקדמו ליום הקובע */
+  /** חודשי ביטוח מתוך 14 שקדמו ליום הקובע. מדויק — נשאב ממסמך או מביטוח לאומי */
   insuredMonthsOf14?: number;
-  /** חודשי ביטוח מתוך 22 */
+  /** חודשי ביטוח מתוך 22. מדויק */
   insuredMonthsOf22?: number;
+  /**
+   * חודשי ביטוח ב-24 החודשים האחרונים — מה שהמשתמש יודע לענות בעל פה.
+   * זה אינו אחד משני חלונות החוק, ולכן תוצאה שנגזרת ממנו לעולם לא
+   * מסומנת כ-calculated אלא כ-estimated עם הערה מפורשת.
+   */
+  insuredMonthsOf24?: number;
   takesLeave: boolean;
   /** שבועות שהאדם הזה לוקח מתוך המכסה המשותפת */
   leaveWeeks?: number;

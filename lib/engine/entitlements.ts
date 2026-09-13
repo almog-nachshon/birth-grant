@@ -54,6 +54,76 @@ export function dailyAllowance(
   };
 }
 
+/**
+ * תנאי הסף לדמי לידה.
+ *
+ * החוק בודק שני חלונות: 10 חודשים מתוך 14, או 15 מתוך 22, שקדמו ליום
+ * הקובע. חצי גמלה ב-6 מתוך 14. אלה חלונות שאי אפשר לספור בעל פה, ולכן
+ * השאלון שואל שאלה אחת — חודשי ביטוח ב-24 החודשים האחרונים.
+ *
+ * 24 אינו אף אחד משני החלונות. מספר שנגזר ממנו הוא אינדיקציה, לא פסיקה,
+ * והוא מוחזר תמיד כ-estimated עם הערה שאומרת את זה במפורש. ערך מדויק
+ * לחלון 14 או 22 — אם הגיע ממסמך או מאישור של ביטוח לאומי — גובר עליו.
+ */
+function qualification(
+  person: { insuredMonthsOf14?: number; insuredMonthsOf22?: number; insuredMonthsOf24?: number },
+  rates: RateMap,
+  weeks: number,
+): { confidence: MoneyLine['confidence']; notes: string[] } {
+  const fullMonths14 = rates.qualify_full_months_14 ?? 10;
+  const fullMonths22 = rates.qualify_full_months_22 ?? 15;
+  const halfMonths = rates.qualify_half_months ?? 6;
+  const halfWeeks = rates.qualify_half_weeks ?? 7;
+
+  const m14 = person.insuredMonthsOf14;
+  const m22 = person.insuredMonthsOf22;
+  const m24 = person.insuredMonthsOf24;
+
+  // ── מסלול מדויק: אחד מחלונות החוק ידוע ──
+  if (m14 != null || m22 != null) {
+    const fullBy14 = m14 != null && m14 >= fullMonths14;
+    const fullBy22 = m22 != null && m22 >= fullMonths22;
+    const halfBy14 = m14 != null && m14 >= halfMonths;
+
+    if (fullBy14 || fullBy22) return { confidence: 'calculated', notes: [] };
+    if (halfBy14) {
+      return {
+        confidence: 'estimated',
+        notes: [`לפי חודשי הביטוח שהוזנו הזכאות היא חלקית בלבד — ${halfWeeks} שבועות ולא ${weeks}.`],
+      };
+    }
+    return {
+      confidence: 'estimated',
+      notes: ['לפי חודשי הביטוח שהוזנו ייתכן שאין זכאות כלל. חובה לאמת מול הסניף.'],
+    };
+  }
+
+  // ── מסלול משוער: רק חלון 24 ──
+  if (m24 != null) {
+    const window = `הזנת ${m24} חודשי ביטוח ב-24 החודשים האחרונים. ביטוח לאומי בודק חלון צר יותר — ${fullMonths14} מתוך 14 או ${fullMonths22} מתוך 22 — ולכן זו הערכה ולא קביעה.`;
+
+    if (m24 >= fullMonths22) {
+      return {
+        confidence: 'estimated',
+        notes: [window, 'הכמות מספיקה על פניה לזכאות מלאה, בתנאי שהחודשים רצופים סמוך להפסקת העבודה.'],
+      };
+    }
+    if (m24 >= halfMonths) {
+      return {
+        confidence: 'estimated',
+        notes: [window, `ייתכן שהזכאות חלקית — ${halfWeeks} שבועות ולא ${weeks}. כדאי לברר בסניף.`],
+      };
+    }
+    return { confidence: 'estimated', notes: [window, 'ייתכן שאין זכאות כלל. חובה לאמת מול הסניף.'] };
+  }
+
+  // ── אין נתון בכלל ──
+  return {
+    confidence: 'estimated',
+    notes: ['לא הוזנו חודשי ביטוח — החישוב מניח זכאות מלאה. יש לאמת מול ביטוח לאומי.'],
+  };
+}
+
 export function calculateEntitlements(profile: CaseProfile, rates: RateMap): EntitlementResult {
   const lines: MoneyLine[] = [];
   const missing: string[] = [];
@@ -104,25 +174,9 @@ export function calculateEntitlements(profile: CaseProfile, rates: RateMap): Ent
 
     // בדיקת תנאי סף — משפיעה על מספר השבועות בפועל
     const notes: string[] = [];
-    const m14 = person.insuredMonthsOf14;
-    const m22 = person.insuredMonthsOf22;
-    const fullBy14 = m14 != null && m14 >= (rates.qualify_full_months_14 ?? 10);
-    const fullBy22 = m22 != null && m22 >= (rates.qualify_full_months_22 ?? 15);
-    const halfBy14 = m14 != null && m14 >= (rates.qualify_half_months ?? 6);
-
-    let confidence: MoneyLine['confidence'] = 'calculated';
-    if (m14 == null && m22 == null) {
-      notes.push('לא הוזנו חודשי ביטוח — החישוב מניח זכאות מלאה. יש לאמת מול ביטוח לאומי.');
-      confidence = 'estimated';
-    } else if (!fullBy14 && !fullBy22 && halfBy14) {
-      notes.push(
-        `לפי חודשי הביטוח שהוזנו הזכאות היא חלקית בלבד — ${rates.qualify_half_weeks ?? 7} שבועות ולא ${weeks}.`,
-      );
-      confidence = 'estimated';
-    } else if (!halfBy14 && !fullBy22) {
-      notes.push('לפי חודשי הביטוח שהוזנו ייתכן שאין זכאות כלל. חובה לאמת מול הסניף.');
-      confidence = 'estimated';
-    }
+    const qualify = qualification(person, rates, weeks);
+    notes.push(...qualify.notes);
+    let confidence: MoneyLine['confidence'] = qualify.confidence;
     if (capped) notes.push('התעריף היומי הוגבל לתקרה החוקית.');
     if (person.role === 'partner') {
       notes.push('תנאי הסף נספרים ליום הפסקת העבודה שלך — לא ליום הלידה.');

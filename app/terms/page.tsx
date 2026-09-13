@@ -1,6 +1,6 @@
 import s from '../legal.module.css';
 
-export const metadata = { title: 'תנאי שימוש — סדר בבלגן' };
+export const metadata = { title: 'תנאי שימוש — מענקי לידה' };
 
 export default function Terms() {
   return (

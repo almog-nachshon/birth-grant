@@ -6,6 +6,9 @@ import s from './login.module.css';
 
 export default function LoginPage() {
   const configured = isSupabaseConfigured();
+  // כניסה והרשמה הן אותה זרימה טכנית ב-Google, אבל לא אותו דבר
+  // למי שמגיע לדף. מי שנרשם צריך לדעת מה עומד לקרות לו אחר כך.
+  const [mode, setMode] = useState<'signin' | 'signup'>('signup');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'working' | 'sent' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -88,9 +91,34 @@ export default function LoginPage() {
       <div className={s.card}>
         <a href="/" className={s.back}>← לעמוד הבית</a>
 
-        <h1 className={s.title}>כניסה לתיק שלכם</h1>
+        <div className={s.modes} role="tablist" aria-label="כניסה או הרשמה">
+          <button
+            role="tab"
+            aria-selected={mode === 'signup'}
+            className={s.mode}
+            data-active={mode === 'signup'}
+            onClick={() => setMode('signup')}
+          >
+            הרשמה
+          </button>
+          <button
+            role="tab"
+            aria-selected={mode === 'signin'}
+            className={s.mode}
+            data-active={mode === 'signin'}
+            onClick={() => setMode('signin')}
+          >
+            כניסה
+          </button>
+        </div>
+
+        <h1 className={s.title}>
+          {mode === 'signup' ? 'פתיחת תיק חדש' : 'כניסה לתיק שלכם'}
+        </h1>
         <p className={s.sub}>
-          חשבון אחד לכל זוג. אחרי הכניסה אפשר להזמין את בן/בת הזוג לאותו תיק.
+          {mode === 'signup'
+            ? 'חשבון אחד לכל זוג. אחרי ההרשמה ממלאים שאלון קצר, וממנו נבנות המשימות, התאריכים והסכומים שמגיעים לכם.'
+            : 'ברוכים השבים. התיק, המשימות והמסמכים מחכים איפה שהשארתם אותם.'}
         </p>
 
         {!configured ? (
@@ -116,7 +144,7 @@ export default function LoginPage() {
                   className={`btn btn-google ${s.full}`}
                 >
                   <GoogleIcon />
-                  המשך עם Google
+                  {mode === 'signup' ? 'הרשמה עם Google' : 'כניסה עם Google'}
                 </button>
 
                 <div className={s.divider}><span>או</span></div>
@@ -124,7 +152,9 @@ export default function LoginPage() {
             )}
 
             <form onSubmit={signInWithEmail} className={s.form}>
-              <label className={s.label} htmlFor="email">כתובת מייל</label>
+              <label className={s.label} htmlFor="email">
+                {mode === 'signup' ? 'או הרשמה במייל' : 'או כניסה במייל'}
+              </label>
               <input
                 id="email"
                 type="email"
@@ -140,7 +170,11 @@ export default function LoginPage() {
                 disabled={status === 'working' || !email}
                 className={`btn btn-ghost ${s.full}`}
               >
-                {status === 'working' ? 'רגע…' : 'שליחת קישור כניסה'}
+                {status === 'working'
+                  ? 'רגע…'
+                  : mode === 'signup'
+                    ? 'שליחת קישור הרשמה'
+                    : 'שליחת קישור כניסה'}
               </button>
             </form>
 
@@ -149,7 +183,7 @@ export default function LoginPage() {
         )}
 
         <p className={s.legal}>
-          בכניסה אתם מאשרים את <a href="/terms">תנאי השימוש</a> ואת{' '}
+          {mode === 'signup' ? 'בהרשמה' : 'בכניסה'} אתם מאשרים את <a href="/terms">תנאי השימוש</a> ואת{' '}
           <a href="/privacy">מדיניות הפרטיות</a>. לא נבקש מכם תעודת זהות או פרטי בנק.
         </p>
       </div>

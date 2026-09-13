@@ -180,3 +180,64 @@ test('הסתייגות תמיד מוצמדת לתוצאה', () => {
 function round2(n: number) {
   return Math.round(n * 100) / 100;
 }
+
+// ── תנאי סף לדמי לידה ───────────────────────────────────────
+// השאלון שואל שאלה אחת — חודשי ביטוח ב-24 חודשים. זה אינו אחד
+// משני חלונות החוק, ולכן אסור שתוצאה ממנו תיראה ודאית.
+
+const withInsurance = (over: Record<string, unknown>): CaseProfile =>
+  baseProfile({
+    persons: [
+      {
+        role: 'birthing_parent',
+        employment: 'employee',
+        takesLeave: true,
+        leaveWeeks: 15,
+        monthlyGross: 20000,
+        ...over,
+      },
+      { role: 'partner', employment: 'unemployed', takesLeave: false },
+    ],
+  });
+
+const maternityLine = (profile: CaseProfile) =>
+  calculateEntitlements(profile, RATES).lines.find(
+    (l) => l.key === 'maternity_birthing_parent',
+  )!;
+
+test('חלון 14 מדויק ומספיק — התוצאה ודאית', () => {
+  const line = maternityLine(withInsurance({ insuredMonthsOf14: 12 }));
+  assert.equal(line.confidence, 'calculated');
+  assert.deepEqual(line.notes, []);
+});
+
+test('חלון 24 לעולם לא מסומן כוודאי, גם כשהכמות גדולה', () => {
+  const line = maternityLine(withInsurance({ insuredMonthsOf24: 24 }));
+  assert.equal(line.confidence, 'estimated');
+  assert.ok(
+    line.notes?.some((n) => n.includes('חלון צר יותר')),
+    'ההערה חייבת לומר במפורש שהחלון שנבדק שונה מחלון החוק',
+  );
+});
+
+test('חלון 24 עם כמות נמוכה מזהיר על זכאות חלקית', () => {
+  const line = maternityLine(withInsurance({ insuredMonthsOf24: 8 }));
+  assert.equal(line.confidence, 'estimated');
+  assert.ok(line.notes?.some((n) => n.includes('חלקית')));
+});
+
+test('חלון 24 מתחת לסף החצי מזהיר שייתכן שאין זכאות', () => {
+  const line = maternityLine(withInsurance({ insuredMonthsOf24: 3 }));
+  assert.ok(line.notes?.some((n) => n.includes('אין זכאות')));
+});
+
+test('ערך מדויק גובר על חלון 24 כששניהם קיימים', () => {
+  const line = maternityLine(withInsurance({ insuredMonthsOf14: 12, insuredMonthsOf24: 3 }));
+  assert.equal(line.confidence, 'calculated');
+});
+
+test('בלי שום נתון ביטוח — מניח זכאות מלאה ואומר זאת', () => {
+  const line = maternityLine(withInsurance({}));
+  assert.equal(line.confidence, 'estimated');
+  assert.ok(line.notes?.some((n) => n.includes('לא הוזנו חודשי ביטוח')));
+});

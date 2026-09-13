@@ -12,7 +12,7 @@ const HMOS = ['כללית', 'מכבי', 'מאוחדת', 'לאומית'];
 const CASE_COLS =
   'id, title, due_date, actual_birth_date, birth_order, multiple_birth, hmo, hotel_nights, pregnancy_basket_remaining';
 const PERSON_COLS =
-  'id, role, display_name, employment, employer_name, has_employer_policy, takes_leave, leave_weeks, monthly_gross, annual_self_employed_income, insured_months_of_14, insured_months_of_22, work_stop_date, sick_paid_from_day_one, input_sources, extra';
+  'id, role, user_id, display_name, employment, employer_name, phone, email, has_employer_policy, takes_leave, leave_weeks, monthly_gross, annual_self_employed_income, insured_months_of_14, insured_months_of_22, insured_months_of_24, work_stop_date, sick_paid_from_day_one, input_sources, extra';
 
 /**
  * ערך מספרי בתוך טווח, או null.
@@ -43,6 +43,16 @@ function text(value: unknown, max: number, allowed?: string[]): string | null | 
 
 const bool = (value: unknown): boolean | undefined =>
   typeof value === 'boolean' ? value : undefined;
+
+/** טלפון ישראלי בכל צורה שנוחה למשתמש. נשמר עם ספרות וסימנים בלבד. */
+function phone(value: unknown): string | null | undefined {
+  if (value === null || value === '') return null;
+  if (typeof value !== 'string') return undefined;
+  const cleaned = value.trim().replace(/[^\d+\-() ]/g, '');
+  const digits = cleaned.replace(/\D/g, '');
+  if (digits.length < 6 || digits.length > 15) return undefined;
+  return cleaned.slice(0, 20);
+}
 
 /** מסנן את המפתחות שערכם undefined, כדי ש-PATCH חלקי לא ידרוס שדות. */
 function defined<T extends Record<string, unknown>>(obj: T): Partial<T> {
@@ -82,6 +92,9 @@ const PERSON_FIELDS: Record<string, string> = {
   annualSelfEmployedIncome: 'annual_self_employed_income',
   insuredMonthsOf14: 'insured_months_of_14',
   insuredMonthsOf22: 'insured_months_of_22',
+  insuredMonthsOf24: 'insured_months_of_24',
+  phone: 'phone',
+  email: 'email',
   workStopDate: 'work_stop_date',
 };
 
@@ -99,6 +112,9 @@ const COLUMN_LABELS: Record<string, string> = {
   annual_self_employed_income: 'הכנסה שנתית לפי שומה',
   insured_months_of_14: 'חודשי ביטוח מתוך 14',
   insured_months_of_22: 'חודשי ביטוח מתוך 22',
+  insured_months_of_24: 'חודשי ביטוח בשנתיים האחרונות',
+  phone: 'טלפון',
+  email: 'מייל',
   work_stop_date: 'יום הפסקת העבודה',
 };
 
@@ -132,6 +148,9 @@ function personPatch(input: Record<string, unknown>) {
     annual_self_employed_income: num(input.annualSelfEmployedIncome, 0, 20_000_000),
     insured_months_of_14: num(input.insuredMonthsOf14, 0, 14),
     insured_months_of_22: num(input.insuredMonthsOf22, 0, 22),
+    insured_months_of_24: num(input.insuredMonthsOf24, 0, 24),
+    phone: phone(input.phone),
+    email: text(input.email, 200),
     work_stop_date: date(input.workStopDate),
     sick_paid_from_day_one: bool(input.sickPaidFromDayOne),
   });
@@ -189,7 +208,13 @@ export async function PATCH(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'לא מחובר' }, { status: 401 });
 
-  let body: { case?: Record<string, unknown>; birthing?: Record<string, unknown>; partner?: Record<string, unknown> };
+  let body: {
+    case?: Record<string, unknown>;
+    birthing?: Record<string, unknown>;
+    partner?: Record<string, unknown>;
+    me?: Record<string, unknown>;
+    myRole?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
@@ -222,6 +247,30 @@ export async function PATCH(request: NextRequest) {
 
   const { caseRow, persons } = loaded;
   const bad: string[] = [];
+
+  // ── הפרופיל של המשתמש עצמו ──
+  if (body.me) {
+    const mePatch = defined({
+      display_name: text(body.me.fullName, 80),
+      phone: phone(body.me.phone),
+    });
+    bad.push(...rejected(body.me, mePatch, { fullName: 'display_name', phone: 'phone' }));
+    if (Object.keys(mePatch).length) {
+      const { error } = await supabase.from('profiles').update(mePatch).eq('id', user.id);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+  }
+
+  // ── מי אני בתיק ──
+  // RPC ולא שני UPDATE מכאן: שחרור התפקיד הישן ותפיסת החדש חייבים
+  // לקרות יחד, אחרת רגע אחד שני ההורים מקושרים לאותו משתמש.
+  if (body.myRole === 'birthing_parent' || body.myRole === 'partner') {
+    const current = persons.find((p) => p.user_id === user.id);
+    if (current?.role !== body.myRole) {
+      const { error } = await supabase.rpc('claim_person_role', { target_role: body.myRole });
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+  }
 
   // ── התיק ──
   if (body.case) {
@@ -300,9 +349,17 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
+  const { data: meRow } = await supabase
+    .from('profiles')
+    .select('display_name, phone, avatar_url')
+    .eq('id', user.id)
+    .maybeSingle();
+
   return NextResponse.json({
     case: fresh.caseRow,
     persons: fresh.persons,
+    me: meRow ?? null,
+    myRole: fresh.persons.find((p) => p.user_id === user.id)?.role ?? null,
     sync,
     ...(bad.length
       ? { warning: `לא נשמרו (ערך לא תקין): ${[...new Set(bad)].join(', ')}` }

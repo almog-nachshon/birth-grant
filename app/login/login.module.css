@@ -90,3 +90,33 @@
   line-height: 1.6;
 }
 .legal a { color: var(--ink-soft); }
+
+/* ── מתג כניסה / הרשמה ────────────────────────────── */
+.modes {
+  display: flex;
+  gap: 4px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 4px;
+  margin-bottom: 24px;
+}
+.mode {
+  flex: 1;
+  background: none;
+  border: none;
+  border-radius: 99px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding: 9px 12px;
+  transition: background .15s ease, color .15s ease;
+}
+.mode:hover { color: var(--ink); }
+.mode[data-active='true'] {
+  background: var(--paper);
+  color: var(--accent);
+  box-shadow: var(--shadow);
+}

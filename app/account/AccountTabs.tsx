@@ -8,9 +8,11 @@ import {
   documentProgress,
   overallPercent,
   personProgress,
+  profileProgress,
   type CaseRow,
   type PersonRow,
 } from '@/lib/case/profile';
+import { addWeeks } from '@/lib/engine/schedule';
 import type { EmploymentType, EntitlementResult } from '@/lib/engine/types';
 import s from './account.module.css';
 
@@ -27,9 +29,17 @@ const EMPLOYMENT_LABELS: Record<EmploymentType, [string, string]> = {
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
+interface Me {
+  fullName: string | null;
+  phone: string | null;
+  email: string;
+}
+
 export default function AccountTabs({
   userName,
   avatarUrl,
+  me: initialMe,
+  myRole: initialMyRole,
   caseRow,
   birthing: initialBirthing,
   partner: initialPartner,
@@ -39,6 +49,8 @@ export default function AccountTabs({
 }: {
   userName: string;
   avatarUrl: string | null;
+  me: Me;
+  myRole: 'birthing_parent' | 'partner' | null;
   caseRow: CaseRow;
   birthing: PersonRow;
   partner: PersonRow;
@@ -47,7 +59,9 @@ export default function AccountTabs({
   taskStats: { total: number; done: number; nextDue: string | null };
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState('birth');
+  const [tab, setTab] = useState('profile');
+  const [me, setMe] = useState(initialMe);
+  const [myRole, setMyRole] = useState(initialMyRole);
   const [c, setC] = useState(caseRow);
   const [b, setB] = useState(initialBirthing);
   const [p, setP] = useState(initialPartner);
@@ -59,18 +73,19 @@ export default function AccountTabs({
   const [error, setError] = useState('');
 
   // הנתונים שנשמרו לאחרונה. השוואה מולם מונעת PATCH על שינוי שלא היה.
-  const committed = useRef({ c: caseRow, b: initialBirthing, p: initialPartner });
+  const committed = useRef({ c: caseRow, b: initialBirthing, p: initialPartner, me: initialMe, myRole: initialMyRole });
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── שלמוּת מחושבת מהמצב המקומי, כדי שהאחוזים יזוזו תוך כדי הקלדה ──
   const sections = useMemo(
     () => [
+      profileProgress(me, myRole),
       birthProgress(c),
       personProgress(b, 'היולדת'),
       personProgress(p, 'בן/בת הזוג'),
       documentProgress(docKinds, [b, p]),
     ],
-    [c, b, p, docKinds],
+    [me, myRole, c, b, p, docKinds],
   );
   const overall = overallPercent(sections);
   const pctOf = (key: string) => sections.find((x) => x.key === key)?.percent ?? 0;
@@ -88,10 +103,16 @@ export default function AccountTabs({
     const caseChanges = diff(toCasePayload(c), toCasePayload(committed.current.c));
     const bChanges = diff(toPersonPayload(b), toPersonPayload(committed.current.b));
     const pChanges = diff(toPersonPayload(p), toPersonPayload(committed.current.p));
+    const meChanges = diff(
+      { fullName: me.fullName, phone: me.phone } as Record<string, unknown>,
+      { fullName: committed.current.me.fullName, phone: committed.current.me.phone } as Record<string, unknown>,
+    );
 
     if (Object.keys(caseChanges).length) body.case = caseChanges;
     if (Object.keys(bChanges).length) body.birthing = bChanges;
     if (Object.keys(pChanges).length) body.partner = pChanges;
+    if (Object.keys(meChanges).length) body.me = meChanges;
+    if (myRole && myRole !== committed.current.myRole) body.myRole = myRole;
     if (!Object.keys(body).length) return;
 
     setSave('saving');
@@ -105,8 +126,9 @@ export default function AccountTabs({
       const json = await res.json();
       if (!res.ok && res.status !== 207) throw new Error(json.error ?? 'השמירה נכשלה');
 
-      committed.current = { c, b, p };
+      committed.current = { c, b, p, me, myRole };
       if (json.case?.id) setCaseId(json.case.id as string);
+      if (json.myRole) setMyRole(json.myRole as 'birthing_parent' | 'partner');
       setSave('saved');
       if (json.warning) setError(json.warning);
       router.refresh();
@@ -114,7 +136,7 @@ export default function AccountTabs({
       setSave('error');
       setError(err instanceof Error ? err.message : 'השמירה נכשלה');
     }
-  }, [c, b, p, router]);
+  }, [c, b, p, me, myRole, router]);
 
   // שמירה אוטומטית מושהית. השדות כאן כספיים — עדיף להמתין לסוף ההקלדה
   // מאשר לשלוח בקשה על כל הקשה.
@@ -138,9 +160,18 @@ export default function AccountTabs({
   }, []);
 
   const tabs = [
+    { key: 'profile', label: 'הפרופיל שלי', pct: pctOf('profile') },
     { key: 'birth', label: 'הלידה', pct: pctOf('birth') },
-    { key: 'birthing_parent', label: 'היולדת', pct: pctOf('birthing_parent') },
-    { key: 'partner', label: 'בן/בת הזוג', pct: pctOf('partner') },
+    {
+      key: 'birthing_parent',
+      label: myRole === 'birthing_parent' ? 'היולדת (את)' : 'היולדת',
+      pct: pctOf('birthing_parent'),
+    },
+    {
+      key: 'partner',
+      label: myRole === 'partner' ? 'בן/בת הזוג (אתה)' : 'בן/בת הזוג',
+      pct: pctOf('partner'),
+    },
     { key: 'documents', label: 'מסמכים', pct: pctOf('documents') },
     { key: 'summary', label: 'סיכום', pct: null as number | null },
   ];
@@ -149,8 +180,9 @@ export default function AccountTabs({
     <div className={s.shell}>
       <header className={s.header}>
         <div className={s.headerInner}>
-          <a href="/" className={s.logo}>סדר בבלגן</a>
+          <a href="/" className={s.logo}>מענקי לידה</a>
           <div className={s.headerRight}>
+            <a href="/onboarding" className={s.headerLink}>שאלון מודרך</a>
             {caseId !== 'new' && (
               <a href="/case" className={s.headerLink}>המשימות שלי</a>
             )}
@@ -214,6 +246,9 @@ export default function AccountTabs({
         </nav>
 
         <div className={s.panel} role="tabpanel">
+          {tab === 'profile' && (
+            <ProfileTab me={me} setMe={setMe} myRole={myRole} setMyRole={setMyRole} b={b} p={p} />
+          )}
           {tab === 'birth' && <BirthTab c={c} setC={setC} />}
           {tab === 'birthing_parent' && (
             <PersonTab person={b} setPerson={setB} variant="birthing" />
@@ -225,6 +260,7 @@ export default function AccountTabs({
               variant="partner"
               onSplitChange={setSplit}
               onTakesLeaveChange={setPartnerTakesLeave}
+              anchorDate={c.actual_birth_date ?? c.due_date}
             />
           )}
           {tab === 'documents' && (
@@ -272,8 +308,7 @@ function toPersonPayload(p: PersonRow) {
     leaveWeeks: p.leave_weeks,
     monthlyGross: p.monthly_gross,
     annualSelfEmployedIncome: p.annual_self_employed_income,
-    insuredMonthsOf14: p.insured_months_of_14,
-    insuredMonthsOf22: p.insured_months_of_22,
+    insuredMonthsOf24: p.insured_months_of_24,
     workStopDate: p.work_stop_date,
     sickPaidFromDayOne: p.sick_paid_from_day_one,
     hasDisabilityBL: p.extra?.hasDisabilityBL ?? false,
@@ -370,12 +405,15 @@ function PersonTab({
   variant,
   onSplitChange,
   onTakesLeaveChange,
+  anchorDate,
 }: {
   person: PersonRow;
   setPerson: (fn: (prev: PersonRow) => PersonRow) => void;
   variant: 'birthing' | 'partner';
   onSplitChange?: (partnerWeeks: number) => void;
   onTakesLeaveChange?: (takes: boolean) => void;
+  /** תאריך הלידה — בפועל אם ידוע, אחרת משוער. בלעדיו אין תאריכי חופשה. */
+  anchorDate?: string | null;
 }) {
   const i = variant === 'birthing' ? 0 : 1;
   const set = <K extends keyof PersonRow>(key: K, value: PersonRow[K]) =>
@@ -484,28 +522,19 @@ function PersonTab({
               />
             </Field>
 
-            <Field label="חודשי ביטוח מתוך 14" hint="קובע זכאות מלאה מול חלקית">
+            <Field
+              label="חודשי ביטוח בשנתיים האחרונות"
+              hint="כמה חודשים עבדתם או הייתם מבוטחים ב-24 החודשים שקדמו להפסקת העבודה"
+              source={source.insuredMonthsOf24}
+            >
               <input
                 type="number"
                 min={0}
-                max={14}
+                max={24}
                 className={s.input}
-                value={person.insured_months_of_14 ?? ''}
+                value={person.insured_months_of_24 ?? ''}
                 onChange={(e) =>
-                  set('insured_months_of_14', e.target.value === '' ? null : Number(e.target.value))
-                }
-              />
-            </Field>
-
-            <Field label="חודשי ביטוח מתוך 22" hint="מסלול זכאות חלופי">
-              <input
-                type="number"
-                min={0}
-                max={22}
-                className={s.input}
-                value={person.insured_months_of_22 ?? ''}
-                onChange={(e) =>
-                  set('insured_months_of_22', e.target.value === '' ? null : Number(e.target.value))
+                  set('insured_months_of_24', e.target.value === '' ? null : Number(e.target.value))
                 }
               />
             </Field>
@@ -525,19 +554,22 @@ function PersonTab({
           </label>
 
           {person.takes_leave && (
-            <Field
-              label={`חלוקה: ${15 - (person.leave_weeks ?? 0)} שבועות ליולדת, ${person.leave_weeks ?? 0} לבן/בת הזוג`}
-              hint="היולדת חייבת מינימום 6 שבועות"
-            >
-              <input
-                type="range"
-                min={0}
-                max={9}
-                value={person.leave_weeks ?? 0}
-                onChange={(e) => onSplitChange?.(Number(e.target.value))}
-                className={s.range}
-              />
-            </Field>
+            <>
+              <Field
+                label={`חלוקה: ${15 - (person.leave_weeks ?? 0)} שבועות ליולדת, ${person.leave_weeks ?? 0} לבן/בת הזוג`}
+                hint="היולדת חייבת מינימום 6 שבועות מתוך ה-15"
+              >
+                <input
+                  type="range"
+                  min={0}
+                  max={9}
+                  value={person.leave_weeks ?? 0}
+                  onChange={(e) => onSplitChange?.(Number(e.target.value))}
+                  className={s.range}
+                />
+              </Field>
+              <LeaveDates anchorDate={anchorDate} partnerWeeks={person.leave_weeks ?? 0} />
+            </>
           )}
 
           <label className={s.check}>
@@ -782,6 +814,142 @@ function SummaryTab({
       )}
 
       <p className={s.disclaimer}>{entitlements.disclaimer}</p>
+    </section>
+  );
+}
+
+/**
+ * תאריכי היציאה והחזרה של כל הורה, נגזרים מהסרגל בזמן אמת.
+ * בלי זה הסרגל הוא מספר מופשט, והמשתמש לא יודע לאיזה תאריך
+ * הוא בעצם מחייב את עצמו מול המעסיק.
+ */
+function LeaveDates({
+  anchorDate,
+  partnerWeeks,
+}: {
+  anchorDate?: string | null;
+  partnerWeeks: number;
+}) {
+  if (!anchorDate) {
+    return (
+      <p className={s.hint}>
+        התאריכים המדויקים יופיעו כאן ברגע שיוזן תאריך הלידה בטאב ״הלידה״.
+      </p>
+    );
+  }
+
+  const birthingWeeks = 15 - partnerWeeks;
+  const birthingEnd = addWeeks(anchorDate, birthingWeeks);
+  const partnerEnd = addWeeks(birthingEnd, partnerWeeks);
+  const fmt = (d: string) =>
+    new Date(d + 'T00:00:00Z').toLocaleDateString('he-IL', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC',
+    });
+
+  return (
+    <div className={s.leaveDates}>
+      <div className={s.leaveRow}>
+        <span className={s.leaveWho}>היולדת</span>
+        <span className={s.leaveSpan}>{fmt(anchorDate)} — {fmt(birthingEnd)}</span>
+        <span className={s.leaveWeeks}>{birthingWeeks} שבועות</span>
+      </div>
+      {partnerWeeks > 0 && (
+        <div className={s.leaveRow}>
+          <span className={s.leaveWho}>בן/בת הזוג</span>
+          <span className={s.leaveSpan}>{fmt(birthingEnd)} — {fmt(partnerEnd)}</span>
+          <span className={s.leaveWeeks}>{partnerWeeks} שבועות</span>
+        </div>
+      )}
+      <p className={s.hint}>
+        התקופה של בן/בת הזוג מתחילה כשזו של היולדת נגמרת — אי אפשר לחפוף אותן.
+      </p>
+    </div>
+  );
+}
+
+function ProfileTab({
+  me,
+  setMe,
+  myRole,
+  setMyRole,
+  b,
+  p,
+}: {
+  me: Me;
+  setMe: (fn: (prev: Me) => Me) => void;
+  myRole: 'birthing_parent' | 'partner' | null;
+  setMyRole: (role: 'birthing_parent' | 'partner') => void;
+  b: PersonRow;
+  p: PersonRow;
+}) {
+  const roles = [
+    { role: 'birthing_parent' as const, label: 'אני היולדת', name: b.display_name },
+    { role: 'partner' as const, label: 'אני בן/בת הזוג', name: p.display_name },
+  ];
+
+  return (
+    <section className={s.form}>
+      <p className={s.formIntro}>
+        הפרטים כאן שייכים לחשבון שלכם, לא לתיק. הם משמשים לזיהוי ולתזכורות —
+        ולא נשלחים לביטוח לאומי, למעסיק או לאף גורם אחר.
+      </p>
+
+      <div className={s.grid2}>
+        <Field label="שם מלא">
+          <input
+            className={s.input}
+            value={me.fullName ?? ''}
+            onChange={(e) => setMe((prev) => ({ ...prev, fullName: e.target.value || null }))}
+          />
+        </Field>
+
+        <Field label="כתובת מייל" hint="מהחשבון שאיתו נכנסתם. לא ניתן לשינוי כאן">
+          <input className={s.input} dir="ltr" value={me.email} readOnly disabled />
+        </Field>
+
+        <Field label="טלפון" hint="לתזכורות על מועדים שמתקרבים">
+          <input
+            type="tel"
+            dir="ltr"
+            className={s.input}
+            value={me.phone ?? ''}
+            placeholder="050-0000000"
+            onChange={(e) => setMe((prev) => ({ ...prev, phone: e.target.value || null }))}
+          />
+        </Field>
+      </div>
+
+      <div className={s.subBlock}>
+        <p className={s.subTitle}>מי אני בתיק?</p>
+        <p className={s.hint}>
+          קובע אילו משימות משויכות אליכם ואילו לבן/בת הזוג. אפשר לשנות בכל רגע.
+        </p>
+
+        <div className={s.roles}>
+          {roles.map((r) => (
+            <button
+              key={r.role}
+              type="button"
+              className={s.role}
+              data-active={myRole === r.role}
+              onClick={() => setMyRole(r.role)}
+              aria-pressed={myRole === r.role}
+            >
+              <span className={s.roleLabel}>{r.label}</span>
+              {r.name && <span className={s.roleName}>{r.name}</span>}
+            </button>
+          ))}
+        </div>
+
+        {myRole === null && (
+          <p className={s.hint}>
+            עדיין לא בחרתם. עד שתבחרו, המשימות מוצגות לשני ההורים בלי שיוך אישי.
+          </p>
+        )}
+      </div>
     </section>
   );
 }
