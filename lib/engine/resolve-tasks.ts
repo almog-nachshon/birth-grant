@@ -69,6 +69,21 @@ function matches(
           ? (person.hasDisabilityWorkInjury ?? false)
           : profile.persons.some((p) => p.hasDisabilityWorkInjury);
         break;
+      // סף אחוזים: זכות שנפתחת רק מעל אחוז מסוים.
+      // אחוז שלא הוזן אינו "מתחת לסף" אלא "לא ידוע" — מציגים את
+      // המשימה, כי עדיף לברר מאשר להסתיר זכות בשקט.
+      case 'min_disability_pct_bl': {
+        const pct = person?.disabilityPercentBL;
+        if (pct == null) continue;
+        if (typeof expected === 'number' && pct < expected) return false;
+        continue;
+      }
+      case 'min_disability_pct_mod': {
+        const pct = person?.disabilityPercentMOD;
+        if (pct == null) continue;
+        if (typeof expected === 'number' && pct < expected) return false;
+        continue;
+      }
       case 'multiple_birth':
         actual = profile.multipleBirth;
         break;

@@ -176,6 +176,16 @@ export function calculateEntitlements(profile: CaseProfile, rates: RateMap): Ent
     const notes: string[] = [];
     const qualify = qualification(person, rates, weeks);
     notes.push(...qualify.notes);
+
+    // "עצמאי" בביטוח לאומי אינו כל מי שרשום במע"מ: צריך לעמוד בסף שעות
+    // או הכנסה, ומי שלא עומד בו מוגדר "עצמאי שאינו עונה להגדרה" ואין לו
+    // דמי לידה כלל. עוסק פטור נמצא הרבה פעמים בדיוק על הגבול.
+    if (person.selfEmployedStatus === 'exempt') {
+      notes.push(
+        'רשומה כעוסק פטור — חובה לוודא מול ביטוח לאומי שאת עונה להגדרת "עצמאית": ' +
+          'הסף הוא שעות עבודה או הכנסה, ומי שלא עומד בו אינו זכאי לדמי לידה כלל.',
+      );
+    }
     let confidence: MoneyLine['confidence'] = qualify.confidence;
     if (capped) notes.push('התעריף היומי הוגבל לתקרה החוקית.');
     if (person.role === 'partner') {

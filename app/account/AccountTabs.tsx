@@ -59,6 +59,7 @@ export default function AccountTabs({
   taskStats: { total: number; done: number; nextDue: string | null };
 }) {
   const router = useRouter();
+  const TOTAL_WEEKS = 15;
   const [tab, setTab] = useState('profile');
   const [me, setMe] = useState(initialMe);
   const [myRole, setMyRole] = useState(initialMyRole);
@@ -148,7 +149,6 @@ export default function AccountTabs({
     };
   }, [flush]);
 
-  const TOTAL_WEEKS = 15;
   const setSplit = useCallback((partnerWeeks: number) => {
     setB((prev) => ({ ...prev, leave_weeks: TOTAL_WEEKS - partnerWeeks }));
     setP((prev) => ({ ...prev, leave_weeks: partnerWeeks }));
@@ -158,6 +158,27 @@ export default function AccountTabs({
     setP((prev) => ({ ...prev, takes_leave: takes, leave_weeks: takes ? (prev.leave_weeks ?? 0) : 0 }));
     if (!takes) setB((prev) => ({ ...prev, leave_weeks: TOTAL_WEEKS }));
   }, []);
+
+  // יום הפסקת העבודה נגזר מהחלוקה ומתאריך הלידה, ולא נשאל בנפרד:
+  // היולדת מפסיקה בלידה, ובן/בת הזוג ביום שבו התקופה שלה נגמרת.
+  // מי שבפועל הפסיק בתאריך אחר מסמן זאת, ואז הגזירה מפסיקה לדרוס.
+  const anchor = c.actual_birth_date ?? c.due_date;
+  useEffect(() => {
+    if (!anchor) return;
+    const partnerWeeks = p.takes_leave ? (p.leave_weeks ?? 0) : 0;
+    const birthingEnd = addWeeks(anchor, TOTAL_WEEKS - partnerWeeks);
+
+    setB((prev) =>
+      prev.input_sources?.workStopDate === 'manual' || prev.work_stop_date === anchor
+        ? prev
+        : { ...prev, work_stop_date: anchor },
+    );
+    setP((prev) =>
+      prev.input_sources?.workStopDate === 'manual' || prev.work_stop_date === birthingEnd
+        ? prev
+        : { ...prev, work_stop_date: birthingEnd },
+    );
+  }, [anchor, p.takes_leave, p.leave_weeks]);
 
   const tabs = [
     { key: 'profile', label: 'הפרופיל שלי', pct: pctOf('profile') },
@@ -251,7 +272,13 @@ export default function AccountTabs({
           )}
           {tab === 'birth' && <BirthTab c={c} setC={setC} />}
           {tab === 'birthing_parent' && (
-            <PersonTab person={b} setPerson={setB} variant="birthing" />
+            <PersonTab
+              person={b}
+              setPerson={setB}
+              variant="birthing"
+              isMe={myRole === 'birthing_parent'}
+              profileName={me.fullName}
+            />
           )}
           {tab === 'partner' && (
             <PersonTab
@@ -260,7 +287,9 @@ export default function AccountTabs({
               variant="partner"
               onSplitChange={setSplit}
               onTakesLeaveChange={setPartnerTakesLeave}
-              anchorDate={c.actual_birth_date ?? c.due_date}
+              anchorDate={anchor}
+              isMe={myRole === 'partner'}
+              profileName={me.fullName}
             />
           )}
           {tab === 'documents' && (
@@ -311,6 +340,10 @@ function toPersonPayload(p: PersonRow) {
     insuredMonthsOf24: p.insured_months_of_24,
     workStopDate: p.work_stop_date,
     sickPaidFromDayOne: p.sick_paid_from_day_one,
+    selfEmployedStatus: p.self_employed_status,
+    disabilityPercentBL: p.disability_percent_bl,
+    disabilityPercentMOD: p.disability_percent_mod,
+    disabilityItems: p.disability_items,
     hasDisabilityBL: p.extra?.hasDisabilityBL ?? false,
     hasDisabilityMOD: p.extra?.hasDisabilityMOD ?? false,
     hasDisabilityWorkInjury: p.extra?.hasDisabilityWorkInjury ?? false,
@@ -406,6 +439,8 @@ function PersonTab({
   onSplitChange,
   onTakesLeaveChange,
   anchorDate,
+  isMe,
+  profileName,
 }: {
   person: PersonRow;
   setPerson: (fn: (prev: PersonRow) => PersonRow) => void;
@@ -414,6 +449,9 @@ function PersonTab({
   onTakesLeaveChange?: (takes: boolean) => void;
   /** תאריך הלידה — בפועל אם ידוע, אחרת משוער. בלעדיו אין תאריכי חופשה. */
   anchorDate?: string | null;
+  /** ההורה הזה הוא המשתמש המחובר. אז השם מגיע מהפרופיל ולא נשאל שוב. */
+  isMe?: boolean;
+  profileName?: string | null;
 }) {
   const i = variant === 'birthing' ? 0 : 1;
   const set = <K extends keyof PersonRow>(key: K, value: PersonRow[K]) =>
@@ -435,14 +473,20 @@ function PersonTab({
       </p>
 
       <div className={s.grid2}>
-        <Field label="שם">
-          <input
-            className={s.input}
-            value={person.display_name ?? ''}
-            placeholder={variant === 'birthing' ? 'איך לקרוא לה בתיק' : 'איך לקרוא לו/לה בתיק'}
-            onChange={(e) => set('display_name', e.target.value || null)}
-          />
-        </Field>
+        {isMe ? (
+          <Field label="שם" hint="מגיע מהפרופיל שלכם. לשינוי — בטאב ״הפרופיל שלי״">
+            <input className={s.input} value={profileName ?? person.display_name ?? ''} readOnly disabled />
+          </Field>
+        ) : (
+          <Field label="שם">
+            <input
+              className={s.input}
+              value={person.display_name ?? ''}
+              placeholder={variant === 'birthing' ? 'איך לקרוא לה בתיק' : 'איך לקרוא לו/לה בתיק'}
+              onChange={(e) => set('display_name', e.target.value || null)}
+            />
+          </Field>
+        )}
 
         <Field label="סוג העסקה">
           <select
@@ -488,6 +532,33 @@ function PersonTab({
         )}
 
         {isSelf && (
+          <Field label="סוג העוסק" hint="קובע אילו אישורים צריך, ומשפיע על הגדרת ״עצמאית״">
+            <select
+              className={s.input}
+              value={person.self_employed_status ?? ''}
+              onChange={(e) =>
+                set(
+                  'self_employed_status',
+                  (e.target.value || null) as PersonRow['self_employed_status'],
+                )
+              }
+            >
+              <option value="">לא לציין</option>
+              <option value="exempt">עוסק פטור</option>
+              <option value="licensed">עוסק מורשה</option>
+              <option value="company">חברה בע״מ</option>
+            </select>
+            {person.self_employed_status === 'exempt' && (
+              <span className={s.warn}>
+                עוסק פטור נמצא לא פעם מתחת לסף שביטוח לאומי דורש כדי להכיר במישהו
+                כ״עצמאי״. אם הסף לא מתקיים — אין דמי לידה כלל. שווה לברר בסניף לפני
+                שמסתמכים על הסכום כאן.
+              </span>
+            )}
+          </Field>
+        )}
+
+        {isSelf && (
           <Field
             label="הכנסה שנתית לפי שומה"
             hint="הגבוהה מבין שתי השומות האחרונות"
@@ -513,13 +584,38 @@ function PersonTab({
 
         {employed && (
           <>
-            <Field label="יום הפסקת העבודה" hint="״היום הקובע״ — קריטי לטופס 360">
+            <Field
+              label="יום הפסקת העבודה"
+              hint={
+                person.input_sources?.workStopDate === 'manual'
+                  ? '״היום הקובע״ — קריטי לטופס 360'
+                  : 'נגזר אוטומטית מחלוקת השבועות ומתאריך הלידה'
+              }
+            >
               <input
                 type="date"
                 className={s.input}
                 value={person.work_stop_date ?? ''}
+                readOnly={person.input_sources?.workStopDate !== 'manual'}
+                disabled={person.input_sources?.workStopDate !== 'manual'}
                 onChange={(e) => set('work_stop_date', e.target.value || null)}
               />
+              <label className={s.checkSmall}>
+                <input
+                  type="checkbox"
+                  checked={person.input_sources?.workStopDate === 'manual'}
+                  onChange={(e) =>
+                    setPerson((prev) => ({
+                      ...prev,
+                      input_sources: {
+                        ...(prev.input_sources ?? {}),
+                        workStopDate: e.target.checked ? 'manual' : 'derived',
+                      },
+                    }))
+                  }
+                />
+                <span>הפסקתי לעבוד בתאריך אחר</span>
+              </label>
             </Field>
 
             <Field
@@ -587,7 +683,7 @@ function PersonTab({
               checked={person.sick_paid_from_day_one}
               onChange={(e) => set('sick_paid_from_day_one', e.target.checked)}
             />
-            <span>החוזה משלם 100% מיום מחלה ראשון</span>
+            <span>האם יש סעיף בחוזה שמשלם 100% על מחלה מהיום הראשון?</span>
           </label>
           <p className={s.hint}>
             שווה לבדוק בהסכם — זה משנה משמעותית את התשלום על חמשת ימי ההיעדרות.
@@ -599,7 +695,9 @@ function PersonTab({
         <p className={s.subTitle}>נכות מוכרת</p>
         <p className={s.hint}>
           פותח זכויות שרוב האנשים לא יודעים עליהן — חלקן לא ניתנות אוטומטית ודורשות בקשה יזומה.
+          חלק מהזכויות נפתחות רק מעל אחוז מסוים, ולכן שווה למלא את האחוז ולא רק לסמן.
         </p>
+
         <label className={s.check}>
           <input
             type="checkbox"
@@ -608,6 +706,21 @@ function PersonTab({
           />
           <span>נכות כללית מביטוח לאומי</span>
         </label>
+        {person.extra?.hasDisabilityBL && (
+          <Field label="אחוז נכות משוקלל — ביטוח לאומי" hint="כפי שמופיע בהודעה על הזכאות">
+            <input
+              type="number"
+              min={0}
+              max={100}
+              className={s.input}
+              value={person.disability_percent_bl ?? ''}
+              onChange={(e) =>
+                set('disability_percent_bl', e.target.value === '' ? null : Number(e.target.value))
+              }
+            />
+          </Field>
+        )}
+
         <label className={s.check}>
           <input
             type="checkbox"
@@ -616,6 +729,21 @@ function PersonTab({
           />
           <span>נכות מוכרת באגף השיקום (משרד הביטחון)</span>
         </label>
+        {person.extra?.hasDisabilityMOD && (
+          <Field label="אחוז נכות משוקלל — אגף השיקום" hint="כפי שמופיע בפרוטוקול הוועדה">
+            <input
+              type="number"
+              min={0}
+              max={100}
+              className={s.input}
+              value={person.disability_percent_mod ?? ''}
+              onChange={(e) =>
+                set('disability_percent_mod', e.target.value === '' ? null : Number(e.target.value))
+              }
+            />
+          </Field>
+        )}
+
         <label className={s.check}>
           <input
             type="checkbox"
@@ -624,6 +752,10 @@ function PersonTab({
           />
           <span>נכות מעבודה</span>
         </label>
+
+        {(person.extra?.hasDisabilityBL || person.extra?.hasDisabilityMOD) && (
+          <DisabilityItems person={person} setPerson={setPerson} />
+        )}
       </div>
     </section>
   );
@@ -693,8 +825,9 @@ function DocumentsTab({
     return (
       <section className={s.form}>
         <p className={s.formIntro}>
-          העלאת מסמכים תיפתח אחרי שיוזן תאריך הלידה המשוער בטאב ״הלידה״ — המסמכים נשמרים בתוך
-          התיק, והתיק נוצר מהתאריך הזה.
+          המסמכים נשמרים בתוך התיק, והתיק עוד לא נוצר. הוא נוצר בשמירה המוצלחת
+          הראשונה — מלאו שדה כלשהו בטאב אחר, ודאו שמופיע ״נשמר״ למעלה, וחזרו לכאן.
+          אם מופיעה שם שגיאה, היא הסיבה, ולא חסר נתון.
         </p>
       </section>
     );
@@ -866,6 +999,81 @@ function LeaveDates({
       <p className={s.hint}>
         התקופה של בן/בת הזוג מתחילה כשזו של היולדת נגמרת — אי אפשר לחפוף אותן.
       </p>
+    </div>
+  );
+}
+
+/**
+ * פירוט הליקויים מהפרוטוקול.
+ * האחוז המשוקלל אינו סכום הליקויים — ועדה רפואית מחשבת אותו בנוסחה
+ * משוקללת — ולכן הרשימה כאן היא תיעוד בלבד ואינה מסכמת דבר.
+ */
+function DisabilityItems({
+  person,
+  setPerson,
+}: {
+  person: PersonRow;
+  setPerson: (fn: (prev: PersonRow) => PersonRow) => void;
+}) {
+  const rows = person.disability_items ?? [];
+
+  const update = (next: Array<{ condition: string; percent: number | null }>) =>
+    setPerson((prev) => ({ ...prev, disability_items: next }));
+
+  return (
+    <div className={s.items}>
+      <p className={s.subTitle}>פירוט הליקויים</p>
+      <p className={s.hint}>
+        לא חובה. מי שיש לו כמה ליקויים מוכרים — למשל PTSD לצד ליקוי גופני —
+        יכול לרשום אותם כאן כפי שהם מופיעים בפרוטוקול. הסכום כאן אינו האחוז
+        המשוקלל, והמערכת לא מחשבת אותו בעצמה.
+      </p>
+
+      {rows.map((row, i) => (
+        <div key={i} className={s.itemRow}>
+          <input
+            className={s.input}
+            value={row.condition}
+            placeholder="למשל: הפרעת דחק פוסט-טראומטית"
+            onChange={(e) => {
+              const next = [...rows];
+              next[i] = { ...row, condition: e.target.value };
+              update(next);
+            }}
+          />
+          <div className={s.itemPct}>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              className={s.input}
+              value={row.percent ?? ''}
+              onChange={(e) => {
+                const next = [...rows];
+                next[i] = { ...row, percent: e.target.value === '' ? null : Number(e.target.value) };
+                update(next);
+              }}
+            />
+            <span className={s.currencySign}>%</span>
+          </div>
+          <button
+            type="button"
+            className={s.itemRemove}
+            aria-label="הסרת שורה"
+            onClick={() => update(rows.filter((_, j) => j !== i))}
+          >
+            ×
+          </button>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        className={s.itemAdd}
+        onClick={() => update([...rows, { condition: '', percent: null }])}
+      >
+        + הוספת ליקוי
+      </button>
     </div>
   );
 }

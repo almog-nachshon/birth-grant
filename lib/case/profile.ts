@@ -37,6 +37,10 @@ export interface PersonRow {
   user_id: string | null;
   work_stop_date: string | null;
   sick_paid_from_day_one: boolean;
+  disability_percent_bl: number | null;
+  disability_percent_mod: number | null;
+  disability_items: Array<{ condition: string; percent: number | null }> | null;
+  self_employed_status: 'exempt' | 'licensed' | 'company' | null;
   input_sources: Record<string, string> | null;
   extra: Record<string, boolean> | null;
 }
@@ -58,9 +62,14 @@ export function toPersonProfile(row: PersonRow): PersonProfile {
     workStopDate: opt(row.work_stop_date),
     sickPaidFromDayOne: row.sick_paid_from_day_one,
     hasEmployerPolicy: row.has_employer_policy,
-    hasDisabilityBL: row.extra?.hasDisabilityBL ?? false,
-    hasDisabilityMOD: row.extra?.hasDisabilityMOD ?? false,
+    // אחוז שנקבע הוא עצמו הצהרה שיש נכות — הדגל נגזר ממנו כדי
+    // שמשתמש שמילא אחוזים ושכח לסמן תיבה לא יאבד זכויות
+    hasDisabilityBL: row.extra?.hasDisabilityBL || row.disability_percent_bl != null,
+    hasDisabilityMOD: row.extra?.hasDisabilityMOD || row.disability_percent_mod != null,
     hasDisabilityWorkInjury: row.extra?.hasDisabilityWorkInjury ?? false,
+    disabilityPercentBL: opt(row.disability_percent_bl),
+    disabilityPercentMOD: opt(row.disability_percent_mod),
+    selfEmployedStatus: opt(row.self_employed_status),
   };
 }
 
@@ -127,6 +136,7 @@ function incomeChecks(p: PersonRow): Check[] {
   return [
     { label: 'שכר ברוטו חודשי', done: p.monthly_gross != null, skip: !needsGross },
     { label: 'הכנסה שנתית לפי שומה', done: p.annual_self_employed_income != null, skip: !needsAnnual },
+    { label: 'סוג העוסק', done: p.self_employed_status != null, skip: !needsAnnual },
     // שאלה אחת. שני חלונות החוק (14 ו-22) נשארים בסכמה לערך מדויק
     // שיגיע ממסמך, אבל אף אחד לא יודע לספור שניהם בעל פה.
     {
@@ -184,6 +194,7 @@ export const DOCUMENT_KINDS = [
   { kind: 'employer_letter', label: 'אישור מעסיק', hint: 'על הפסקת עבודה — לטופס 360', required: false },
   { kind: 'tax_assessment', label: 'שומת מס', hint: 'לעצמאים בלבד', required: false },
   { kind: 'insurance_policy', label: 'פוליסת ביטוח', hint: 'קולקטיב דרך המעסיק או פרטי', required: false },
+  { kind: 'disability_protocol', label: 'פרוטוקול ועדה רפואית', hint: 'ההודעה עם אחוזי הנכות והפירוט', required: false },
   { kind: 'hotel_invoice', label: 'חשבונית מלונית', hint: 'להחזר מהקופה', required: false },
 ] as const;
 

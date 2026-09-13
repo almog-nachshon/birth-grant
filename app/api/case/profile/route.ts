@@ -12,7 +12,7 @@ const HMOS = ['כללית', 'מכבי', 'מאוחדת', 'לאומית'];
 const CASE_COLS =
   'id, title, due_date, actual_birth_date, birth_order, multiple_birth, hmo, hotel_nights, pregnancy_basket_remaining';
 const PERSON_COLS =
-  'id, role, user_id, display_name, employment, employer_name, phone, email, has_employer_policy, takes_leave, leave_weeks, monthly_gross, annual_self_employed_income, insured_months_of_14, insured_months_of_22, insured_months_of_24, work_stop_date, sick_paid_from_day_one, input_sources, extra';
+  'id, role, user_id, display_name, employment, employer_name, phone, email, has_employer_policy, takes_leave, leave_weeks, monthly_gross, annual_self_employed_income, insured_months_of_14, insured_months_of_22, insured_months_of_24, work_stop_date, sick_paid_from_day_one, disability_percent_bl, disability_percent_mod, disability_items, self_employed_status, input_sources, extra';
 
 /**
  * ערך מספרי בתוך טווח, או null.
@@ -93,6 +93,9 @@ const PERSON_FIELDS: Record<string, string> = {
   insuredMonthsOf14: 'insured_months_of_14',
   insuredMonthsOf22: 'insured_months_of_22',
   insuredMonthsOf24: 'insured_months_of_24',
+  selfEmployedStatus: 'self_employed_status',
+  disabilityPercentBL: 'disability_percent_bl',
+  disabilityPercentMOD: 'disability_percent_mod',
   phone: 'phone',
   email: 'email',
   workStopDate: 'work_stop_date',
@@ -113,6 +116,9 @@ const COLUMN_LABELS: Record<string, string> = {
   insured_months_of_14: 'חודשי ביטוח מתוך 14',
   insured_months_of_22: 'חודשי ביטוח מתוך 22',
   insured_months_of_24: 'חודשי ביטוח בשנתיים האחרונות',
+  self_employed_status: 'סוג העוסק',
+  disability_percent_bl: 'אחוזי נכות — ביטוח לאומי',
+  disability_percent_mod: 'אחוזי נכות — אגף השיקום',
   phone: 'טלפון',
   email: 'מייל',
   work_stop_date: 'יום הפסקת העבודה',
@@ -153,7 +159,31 @@ function personPatch(input: Record<string, unknown>) {
     email: text(input.email, 200),
     work_stop_date: date(input.workStopDate),
     sick_paid_from_day_one: bool(input.sickPaidFromDayOne),
+    disability_percent_bl: num(input.disabilityPercentBL, 0, 100),
+    disability_percent_mod: num(input.disabilityPercentMOD, 0, 100),
+    disability_items: items(input.disabilityItems),
+    self_employed_status: text(input.selfEmployedStatus, 20, ['exempt', 'licensed', 'company']),
   });
+}
+
+/**
+ * פירוט הליקויים מהפרוטוקול.
+ * האחוז המשוקלל אינו סכום הליקויים — הוועדה מחשבת אותו אחרת — ולכן
+ * הפירוט נשמר כרשימה להצגה בלבד, ולא נגזר ממנו שום מספר.
+ */
+function items(value: unknown): Array<{ condition: string; percent: number | null }> | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) return undefined;
+  return value
+    .slice(0, 20)
+    .map((row) => {
+      const r = (row ?? {}) as Record<string, unknown>;
+      const condition = typeof r.condition === 'string' ? r.condition.trim().slice(0, 120) : '';
+      const raw = typeof r.percent === 'number' ? r.percent : Number(r.percent);
+      const percent = Number.isFinite(raw) && raw >= 0 && raw <= 100 ? raw : null;
+      return { condition, percent };
+    })
+    .filter((row) => row.condition.length > 0);
 }
 
 /** דגלי הנכות יושבים ב-jsonb, ולכן מתמזגים ולא נדרסים. */
@@ -223,21 +253,29 @@ export async function PATCH(request: NextRequest) {
 
   let loaded = await loadCase(supabase);
 
-  // אין תיק — נוצר ריק בשמירה הראשונה, כדי שהאזור האישי יהיה מיד בר-עריכה
+  // אין תיק — נוצר ריק בשמירה הראשונה, כדי שהאזור האישי יהיה מיד בר-עריכה.
+  //
+  // בלי .select(): ב-INSERT ... RETURNING מחיל Postgres גם את מדיניות
+  // ה-SELECT, ששואלת אם המשתמש חבר בתיק. שורת החברוּת נוצרת בטריגר
+  // AFTER INSERT שטרם רץ, ולכן ה-RETURNING נדחה והיצירה נכשלה תמיד.
+  // טוענים מחדש בפקודה נפרדת, אחרי שהטריגר סיים.
   if (!loaded) {
-    const { data: created, error } = await supabase
-      .from('cases')
-      .insert({ created_by: user.id })
-      .select(CASE_COLS)
-      .single();
-    if (error || !created) {
-      return NextResponse.json({ error: error?.message ?? 'יצירת התיק נכשלה' }, { status: 500 });
+    const { error } = await supabase.from('cases').insert({ created_by: user.id });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    const caseId = (created as unknown as CaseRow).id;
+
+    loaded = await loadCase(supabase);
+    if (!loaded) {
+      return NextResponse.json(
+        { error: 'התיק נוצר אך לא נטען חזרה. נסו לרענן את הדף.' },
+        { status: 500 },
+      );
+    }
 
     const { error: pErr } = await supabase.from('case_persons').insert([
-      { case_id: caseId, role: 'birthing_parent', user_id: user.id, employment: 'employee' },
-      { case_id: caseId, role: 'partner', employment: 'employee' },
+      { case_id: loaded.caseRow.id, role: 'birthing_parent', user_id: user.id, employment: 'employee' },
+      { case_id: loaded.caseRow.id, role: 'partner', employment: 'employee' },
     ]);
     if (pErr) return NextResponse.json({ error: pErr.message }, { status: 500 });
 

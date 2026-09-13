@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 const CASE_COLS =
   'id, title, due_date, actual_birth_date, birth_order, multiple_birth, hmo, hotel_nights, pregnancy_basket_remaining';
 const PERSON_COLS =
-  'id, role, user_id, display_name, employment, employer_name, phone, email, has_employer_policy, takes_leave, leave_weeks, monthly_gross, annual_self_employed_income, insured_months_of_14, insured_months_of_22, insured_months_of_24, work_stop_date, sick_paid_from_day_one, input_sources, extra';
+  'id, role, user_id, display_name, employment, employer_name, phone, email, has_employer_policy, takes_leave, leave_weeks, monthly_gross, annual_self_employed_income, insured_months_of_14, insured_months_of_22, insured_months_of_24, work_stop_date, sick_paid_from_day_one, disability_percent_bl, disability_percent_mod, disability_items, self_employed_status, input_sources, extra';
 
 /** שורת הורה ריקה, לפני השמירה הראשונה. מאפשרת לרנדר את הטפסים בלי תיק. */
 function blankPerson(role: 'birthing_parent' | 'partner'): PersonRow {
@@ -34,6 +34,10 @@ function blankPerson(role: 'birthing_parent' | 'partner'): PersonRow {
     insured_months_of_24: null,
     work_stop_date: null,
     sick_paid_from_day_one: false,
+    disability_percent_bl: null,
+    disability_percent_mod: null,
+    disability_items: [],
+    self_employed_status: null,
     input_sources: {},
     extra: {},
   };

@@ -68,6 +68,8 @@ npm run dev                    # http://localhost:3000
 3. `supabase/migrations/003_storage.sql`
 4. `supabase/migrations/004_profile_inputs.sql`
 5. `supabase/migrations/005_profile_contact.sql`
+6. `supabase/migrations/006_fix_case_insert.sql`
+7. `supabase/migrations/007_self_employed_status.sql`
 
 או `npm run migrate`, שמריץ הכול לפי הסדר בטרנזקציות. על בסיס נתונים שכבר
 הוקם — `npm run migrate -- 004`, כי 001–003 אינם אידמפוטנטיים.

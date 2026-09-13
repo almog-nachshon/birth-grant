@@ -14,6 +14,8 @@ export interface PersonProfile {
   monthlyGross?: number;
   /** הכנסה שנתית לפי השומה הגבוהה מבין השתיים (עצמאי/ת) */
   annualSelfEmployedIncome?: number;
+  /** רמת הרישום במע"מ. משפיע על אזהרה, לא על חישוב. */
+  selfEmployedStatus?: 'exempt' | 'licensed' | 'company';
   /** חודשי ביטוח מתוך 14 שקדמו ליום הקובע. מדויק — נשאב ממסמך או מביטוח לאומי */
   insuredMonthsOf14?: number;
   /** חודשי ביטוח מתוך 22. מדויק */
@@ -35,6 +37,9 @@ export interface PersonProfile {
   hasDisabilityBL?: boolean;
   hasDisabilityMOD?: boolean;
   hasDisabilityWorkInjury?: boolean;
+  /** אחוז הנכות המשוקלל שנקבע. לא סכום הליקויים — הוועדה מחשבת אחרת. */
+  disabilityPercentBL?: number;
+  disabilityPercentMOD?: number;
 }
 
 export interface CaseProfile {
