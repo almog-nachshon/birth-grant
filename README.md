@@ -109,9 +109,12 @@ npm run seed -- --publish    # טוען את הקטלוג ומפרסם אותו
 
 שני דברים חייבים להתעדכן, אחרת ההתחברות תישבר בייצור בלי שגיאה ברורה:
 
-- **Google Cloud → Credentials**: להוסיף `https://<הכתובת>/auth/callback` ל-redirect URIs
 - **Supabase → Authentication → URL Configuration**: להוסיף `https://<הכתובת>/**`
   ל-Redirect URLs, ולעדכן את Site URL
+
+ב-Google Cloud אין מה לשנות — ה-redirect URI היחיד שגוגל צריכה להכיר הוא זה של
+Supabase (`https://<PROJECT-REF>.supabase.co/auth/v1/callback`), והוא לא משתנה עם
+הכתובת של האתר. כתובת האפליקציה נכנסת לרשימת ההיתר של Supabase בלבד.
 
 ## פקודות
 

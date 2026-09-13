@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { isSupabaseConfigured } from '@/lib/supabase/config';
+import { useEffect, useState } from 'react';
+import { isSupabaseConfigured, supabaseEnv } from '@/lib/supabase/config';
 import s from './login.module.css';
 
 export default function LoginPage() {
@@ -9,6 +9,28 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'working' | 'sent' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  // האם ספק Google מופעל בפרויקט. null = עדיין לא נבדק, ואז מציגים את הכפתור.
+  const [googleEnabled, setGoogleEnabled] = useState<boolean | null>(null);
+
+  // Supabase מחזיר "provider is not enabled" רק אחרי לחיצה. עדיף לשאול מראש.
+  useEffect(() => {
+    if (!configured) return;
+    let alive = true;
+    (async () => {
+      try {
+        const { url, key } = supabaseEnv();
+        const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: key } });
+        if (!res.ok) return;
+        const settings = await res.json();
+        if (alive) setGoogleEnabled(Boolean(settings?.external?.google));
+      } catch {
+        // לא הצלחנו לברר — משאירים את הכפתור, השגיאה בלחיצה תטפל בזה
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [configured]);
 
   const nextPath =
     typeof window !== 'undefined'
@@ -29,8 +51,15 @@ export default function LoginPage() {
       if (error) throw error;
       // הדפדפן מנווט ל-Google מכאן
     } catch (err) {
+      const raw = err instanceof Error ? err.message : '';
+      // הספק כבוי בדשבורד — מסתירים את הכפתור ומשאירים את הכניסה במייל
+      if (/provider is not enabled/i.test(raw)) {
+        setGoogleEnabled(false);
+        setStatus('idle');
+        return;
+      }
       setStatus('error');
-      setMessage(err instanceof Error ? err.message : 'ההתחברות נכשלה');
+      setMessage(raw || 'ההתחברות נכשלה');
     }
   }
 
@@ -79,16 +108,20 @@ export default function LoginPage() {
           </div>
         ) : (
           <>
-            <button
-              onClick={signInWithGoogle}
-              disabled={status === 'working'}
-              className={`btn btn-google ${s.full}`}
-            >
-              <GoogleIcon />
-              המשך עם Google
-            </button>
+            {googleEnabled !== false && (
+              <>
+                <button
+                  onClick={signInWithGoogle}
+                  disabled={status === 'working'}
+                  className={`btn btn-google ${s.full}`}
+                >
+                  <GoogleIcon />
+                  המשך עם Google
+                </button>
 
-            <div className={s.divider}><span>או</span></div>
+                <div className={s.divider}><span>או</span></div>
+              </>
+            )}
 
             <form onSubmit={signInWithEmail} className={s.form}>
               <label className={s.label} htmlFor="email">כתובת מייל</label>
