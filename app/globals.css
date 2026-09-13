@@ -1,33 +1,41 @@
 /* מערכת העיצוב. מרחיבה את פלטת ה"נייר והדיו" של הגרסה המקורית. */
 
-@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;800&family=Assistant:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Heebo:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg: #F7F5F0;
-  --bg-warm: #FBF3EC;
+  --bg: #FCFBF9;
+  --bg-warm: #FEF5EC;
+  --bg-cool: #EFF6FA;
   --paper: #FFFFFF;
-  --ink: #1C2521;
-  --ink-soft: #5B655F;
-  --ink-faint: #8E958F;
-  --line: #E2DCCF;
-  --line-soft: #EDE8DD;
+  --ink: #16242E;
+  --ink-soft: #55656F;
+  --ink-faint: #8A97A0;
+  --line: #E4E9ED;
+  --line-soft: #EFF2F5;
 
-  --accent: #2B4C5C;
-  --accent-bg: #E7EEF0;
-  --warm: #B0714A;
-  --warm-bg: #F7EADF;
-  --done: #4B7A5D;
-  --done-bg: #E4EEE6;
-  --alert: #A5462F;
-  --alert-bg: #F7E6E1;
+  /* כחול — מבנה, קישורים, כותרות. כתום — פעולה וחום. */
+  --accent: #1A6595;
+  --accent-strong: #14527A;
+  --accent-bg: #E7F1F8;
+  --warm: #C25A17;
+  --warm-vivid: #EE8033;
+  --on-warm: #FFFFFF;
+  --on-accent: #FFFFFF;
+  --warm-bg: #FDEFE2;
+  --done: #2E7D5B;
+  --done-bg: #E4F2EA;
+  --alert: #B23A22;
+  --alert-bg: #FBE9E4;
 
-  --radius: 6px;
-  --radius-lg: 14px;
-  --shadow: 0 1px 2px rgba(28, 37, 33, .04), 0 8px 24px -12px rgba(28, 37, 33, .10);
-  --shadow-lg: 0 2px 4px rgba(28, 37, 33, .04), 0 24px 48px -20px rgba(28, 37, 33, .16);
+  --radius: 9px;
+  --radius-lg: 18px;
+  --shadow: 0 1px 2px rgba(22, 36, 46, .04), 0 8px 24px -12px rgba(22, 36, 46, .12);
+  --shadow-lg: 0 2px 4px rgba(22, 36, 46, .04), 0 24px 48px -20px rgba(22, 36, 46, .18);
 
-  --serif: 'Frank Ruhl Libre', Georgia, serif;
-  --sans: 'Assistant', -apple-system, 'Segoe UI', sans-serif;
+  /* Rubik לכותרות — סופי אותיות מעוגלים, קריא מאוד בעברית.
+     serif-- נשמר כשם משתנה כדי לא לשבור מודולים שמשתמשים בו. */
+  --serif: 'Rubik', 'Segoe UI', system-ui, sans-serif;
+  --sans: 'Heebo', -apple-system, 'Segoe UI', sans-serif;
 
   --max: 1080px;
 }
@@ -37,7 +45,10 @@
 html, body { margin: 0; padding: 0; }
 
 body {
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: url('/pattern-nursery.svg');
+  background-size: 260px 260px;
+  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--sans);
   font-size: 16px;
@@ -45,7 +56,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3 { font-family: var(--serif); line-height: 1.15; margin: 0; font-weight: 700; }
+h1, h2, h3 { font-family: var(--serif); line-height: 1.2; margin: 0; font-weight: 600; letter-spacing: -.01em; }
 p { margin: 0; }
 a { color: inherit; }
 
@@ -69,10 +80,12 @@ a { color: inherit; }
 }
 .btn:hover { transform: translateY(-1px); }
 .btn:active { transform: translateY(0); }
-.btn-primary { background: var(--ink); color: var(--bg); box-shadow: var(--shadow); }
-.btn-primary:hover { box-shadow: var(--shadow-lg); }
-.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
-.btn-ghost:hover { background: var(--paper); }
+.btn-primary { background: var(--warm); color: var(--on-warm); box-shadow: var(--shadow); }
+.btn-primary:hover { filter: brightness(.93); box-shadow: var(--shadow-lg); }
+.btn-blue { background: var(--accent-strong); color: var(--on-accent); box-shadow: var(--shadow); }
+.btn-blue:hover { box-shadow: var(--shadow-lg); }
+.btn-ghost { background: var(--paper); color: var(--accent); border-color: var(--line); }
+.btn-ghost:hover { background: var(--accent-bg); border-color: var(--accent-bg); }
 .btn-google { background: var(--paper); color: var(--ink); border-color: var(--line); box-shadow: var(--shadow); }
 
 /* ── כרטיסים ─────────────────────────────────────── */
@@ -81,6 +94,7 @@ a { color: inherit; }
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   padding: 26px;
+  box-shadow: var(--shadow);
 }
 
 .eyebrow {
@@ -95,6 +109,16 @@ a { color: inherit; }
 .lede { font-size: 18px; color: var(--ink-soft); max-width: 62ch; }
 
 /* ── נגישות ──────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
 
 .skip-link {
@@ -116,32 +140,37 @@ a { color: inherit; }
 /* ── מצב כהה ─────────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #141A17;
-    --bg-warm: #1A1F1B;
-    --paper: #1D2420;
-    --ink: #ECEFEA;
-    --ink-soft: #A3ADA6;
-    --ink-faint: #79837C;
-    --line: #2E362F;
-    --line-soft: #262D28;
-    --accent: #8FB8C8;
-    --accent-bg: #1E2B31;
-    --warm: #D9A075;
-    --warm-bg: #2B221B;
-    --done: #7FB894;
-    --done-bg: #1C2A21;
+    --bg: #101A21;
+    --bg-warm: #221913;
+    --bg-cool: #16242E;
+    --paper: #18242C;
+    --ink: #E8EEF2;
+    --ink-soft: #A2B0BA;
+    --ink-faint: #76858F;
+    --line: #27353E;
+    --line-soft: #1F2C34;
+    --accent: #74B4DA;
+    --accent-strong: #1F6F9F;
+    --accent-bg: #172B38;
+    --warm: #E07E36;
+    --warm-vivid: #F0995A;
+    --on-warm: #14100B;
+    --on-accent: #FFFFFF;
+    --warm-bg: #2C1F15;
+    --done: #6FB894;
+    --done-bg: #16281F;
     --alert: #E08670;
-    --alert-bg: #2E1D18;
+    --alert-bg: #2C1A16;
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
     --shadow-lg: 0 2px 4px rgba(0,0,0,.3), 0 24px 48px -20px rgba(0,0,0,.6);
   }
 }
 :root[data-theme="dark"] {
-  --bg: #141A17; --bg-warm: #1A1F1B; --paper: #1D2420;
-  --ink: #ECEFEA; --ink-soft: #A3ADA6; --ink-faint: #79837C;
-  --line: #2E362F; --line-soft: #262D28;
-  --accent: #8FB8C8; --accent-bg: #1E2B31;
-  --warm: #D9A075; --warm-bg: #2B221B;
-  --done: #7FB894; --done-bg: #1C2A21;
-  --alert: #E08670; --alert-bg: #2E1D18;
+  --bg: #101A21; --bg-warm: #221913; --bg-cool: #16242E; --paper: #18242C;
+  --ink: #E8EEF2; --ink-soft: #A2B0BA; --ink-faint: #76858F;
+  --line: #27353E; --line-soft: #1F2C34;
+  --accent: #74B4DA; --accent-strong: #1F6F9F; --accent-bg: #172B38;
+  --warm: #E07E36; --warm-vivid: #F0995A; --on-warm: #14100B; --on-accent: #FFFFFF; --warm-bg: #2C1F15;
+  --done: #6FB894; --done-bg: #16281F;
+  --alert: #E08670; --alert-bg: #2C1A16;
 }

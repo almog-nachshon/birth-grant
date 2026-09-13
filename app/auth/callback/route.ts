@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/case';
+  const next = searchParams.get('next') ?? '/account';
   const authError = searchParams.get('error_description');
 
   if (authError) {
@@ -30,9 +30,7 @@ export async function GET(request: NextRequest) {
     await supabase.rpc('redeem_invite', { raw_token: inviteToken });
   }
 
-  // אין עדיין תיק — לשאלון. יש — למסך התיק.
-  const { data: membership } = await supabase.from('case_members').select('case_id').limit(1);
-  const destination = membership && membership.length > 0 ? next : '/onboarding';
-
-  return NextResponse.redirect(`${origin}${destination}`);
+  // הכניסה תמיד לאזור האישי. משם הזוג ממלא נתונים בקצב שלו,
+  // ולא נזרק לשאלון ליניארי שאי אפשר לצאת ממנו באמצע.
+  return NextResponse.redirect(`${origin}${next}`);
 }

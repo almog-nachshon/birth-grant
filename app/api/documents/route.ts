@@ -4,6 +4,11 @@ import { notConfigured } from '@/lib/supabase/guard';
 
 const ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png', 'image/heic', 'image/webp'];
 const MAX_BYTES = 15 * 1024 * 1024;
+const KINDS = [
+  'payslip', 'id_card', 'hospital_discharge', 'insurance_policy', 'tax_assessment',
+  'employer_letter', 'bank_details', 'hotel_invoice', 'bl_letter', 'other',
+];
+const ROLES = ['birthing_parent', 'partner'];
 
 /** רישום מסמך שכבר הועלה ל-Storage ישירות מהדפדפן. */
 export async function POST(request: NextRequest) {
@@ -35,6 +40,10 @@ export async function POST(request: NextRequest) {
     .insert({
       case_id: body.caseId,
       case_task_id: body.taskId ?? null,
+      // סוג לא מוכר נשמר כ-other ולא נדחה: המסמך כבר ב-Storage,
+      // ודחייה כאן הייתה משאירה קובץ יתום בלי רשומה
+      kind: KINDS.includes(body.kind) ? body.kind : 'other',
+      person_role: ROLES.includes(body.personRole) ? body.personRole : null,
       storage_path: body.storagePath,
       filename: String(body.filename).slice(0, 200),
       mime: body.mime,
@@ -50,7 +59,7 @@ export async function POST(request: NextRequest) {
     case_id: body.caseId,
     actor_id: user.id,
     action: 'doc.uploaded',
-    payload: { document_id: data.id, filename: data.filename },
+    payload: { document_id: data.id, filename: data.filename, kind: data.kind },
   });
 
   return NextResponse.json({ document: data });

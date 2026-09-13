@@ -33,11 +33,25 @@ if (!conn) {
 // בשורש עצמי. מסירים את הפרמטר ומגדירים SSL מפורשות למטה.
 conn = conn.replace(/[?&]sslmode=[^&]*/g, (m) => (m[0] === '?' ? '?' : '')).replace(/\?$/, '');
 
-const FILES = [
+const ALL = [
   'supabase/migrations/001_schema.sql',
   'supabase/migrations/002_rls.sql',
   'supabase/migrations/003_storage.sql',
+  'supabase/migrations/004_profile_inputs.sql',
 ];
+
+// הרצה חלקית: npm run migrate -- 004
+// 001–003 אינם אידמפוטנטיים, ועל בסיס נתונים שכבר הוקם צריך להריץ
+// רק את המיגרציה החדשה.
+const only = process.argv.slice(2).filter((a) => !a.startsWith('-'));
+const FILES = only.length
+  ? ALL.filter((f) => only.some((arg) => f.includes(arg)))
+  : ALL;
+
+if (!FILES.length) {
+  console.error(`לא נמצאה מיגרציה שתואמת ל-${only.join(', ')}`);
+  process.exit(1);
+}
 
 const client = new pg.Client({ connectionString: conn, ssl: { rejectUnauthorized: false } });
 

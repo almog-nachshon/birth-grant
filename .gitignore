@@ -37,3 +37,6 @@ yarn-error.log*
 private/
 
 .vercel
+
+# פלט טייפצ׳ק — נוצר מחדש בכל בנייה
+*.tsbuildinfo

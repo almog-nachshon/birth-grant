@@ -122,3 +122,13 @@
 .schedRow:last-child { border-bottom: 0; }
 
 .disclaimer { margin-top: 34px; font-size: 12.5px; color: var(--ink-faint); line-height: 1.6; max-width: 80ch; }
+
+/* ── קישורים בכותרת ───────────────────────────────── */
+.headerRight { display: flex; align-items: center; gap: 18px; }
+.headerLink {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.headerLink:hover { text-decoration: underline; }

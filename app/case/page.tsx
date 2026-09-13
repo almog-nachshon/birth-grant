@@ -4,21 +4,12 @@ import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { calculateEntitlements } from '@/lib/engine/entitlements';
 import { buildSchedule } from '@/lib/engine/schedule';
 import { ratesAt } from '@/lib/rates';
-import type { CaseProfile, EmploymentType } from '@/lib/engine/types';
+import { toCaseProfile, type CaseRow, type PersonRow } from '@/lib/case/profile';
 import TaskList from './TaskList';
+import Calendar, { type CalendarItem } from './Calendar';
 import s from './case.module.css';
 
 export const dynamic = 'force-dynamic';
-
-interface PersonRow {
-  id: string;
-  role: 'birthing_parent' | 'partner';
-  display_name: string | null;
-  employment: EmploymentType;
-  takes_leave: boolean;
-  has_employer_policy: boolean;
-  extra: Record<string, boolean>;
-}
 
 export default async function CasePage() {
   // לפני שהוקם פרויקט Supabase אין מה להציג — לדף הכניסה, שמסביר מה חסר
@@ -34,7 +25,7 @@ export default async function CasePage() {
     .limit(1)
     .maybeSingle();
 
-  if (!membership) redirect('/onboarding');
+  if (!membership) redirect('/account');
   const caseId = membership.case_id as string;
 
   const [{ data: caseRow }, { data: persons }, { data: tasks }, { data: docs }] = await Promise.all([
@@ -44,25 +35,15 @@ export default async function CasePage() {
     supabase.from('case_documents').select('*').eq('case_id', caseId),
   ]);
 
-  if (!caseRow) redirect('/onboarding');
+  if (!caseRow) redirect('/account');
 
   const rates = ratesAt();
-  const personRows = (persons ?? []) as PersonRow[];
+  const personRows = (persons ?? []) as unknown as PersonRow[];
 
-  const profile: CaseProfile = {
-    dueDate: caseRow.due_date,
-    actualBirthDate: caseRow.actual_birth_date ?? undefined,
-    birthOrder: 1,
-    multipleBirth: false,
-    persons: personRows.map((p) => ({
-      role: p.role,
-      employment: p.employment,
-      takesLeave: p.takes_leave,
-      hasEmployerPolicy: p.has_employer_policy,
-      hasDisabilityBL: p.extra?.hasDisabilityBL,
-      hasDisabilityMOD: p.extra?.hasDisabilityMOD,
-    })),
-  };
+  // הפרופיל נבנה משורות בסיס הנתונים ולא מערכים קשיחים — סדר הלידה, ריבוי
+  // עוברים והקופה מגיעים מהאזור האישי ומשפיעים בפועל על המספרים.
+  const profile = toCaseProfile(caseRow as unknown as CaseRow, personRows);
+  if (!profile) redirect('/account');
 
   const entitlements = calculateEntitlements(profile, rates);
   const schedule = buildSchedule(profile, rates);
@@ -73,14 +54,37 @@ export default async function CasePage() {
   const critical = all.filter((t) => t.status !== 'done' && t.due_at);
   const nextUp = critical.length ? critical[0] : null;
 
+  // היומן מאחד שני מקורות: מועדי המשימות, ואבני הדרך שנגזרות מתאריך הלידה.
+  const calendarItems: CalendarItem[] = [
+    ...all
+      .filter((t) => t.due_at)
+      .map((t) => ({
+        id: t.id as string,
+        date: t.due_at as string,
+        title: t.title as string,
+        kind: 'task' as const,
+        done: t.status === 'done',
+        dueKind: (t.due_kind ?? null) as string | null,
+      })),
+    ...schedule.map((e) => ({
+      id: `sched-${e.key}`,
+      date: e.date,
+      title: e.label,
+      kind: 'milestone' as const,
+    })),
+  ];
+
   return (
     <div className={s.shell}>
       <header className={s.header}>
         <div className={s.headerInner}>
           <a href="/" className={s.logo}>סדר בבלגן</a>
-          <form action="/auth/signout" method="post">
-            <button type="submit" className={s.signout}>יציאה</button>
-          </form>
+          <div className={s.headerRight}>
+            <a href="/account" className={s.headerLink}>האזור האישי</a>
+            <form action="/auth/signout" method="post">
+              <button type="submit" className={s.signout}>יציאה</button>
+            </form>
+          </div>
         </div>
       </header>
 
@@ -149,15 +153,7 @@ export default async function CasePage() {
               <a href="/calculator" className={s.panelLink}>פירוט מלא של החישוב →</a>
             </section>
 
-            <section className={s.panel}>
-              <h2 className={s.panelTitle}>לוח זמנים</h2>
-              {schedule.map((e) => (
-                <div key={e.key} className={s.schedRow}>
-                  <span>{e.label}</span>
-                  <strong>{new Date(e.date).toLocaleDateString('he-IL')}</strong>
-                </div>
-              ))}
-            </section>
+            <Calendar items={calendarItems} />
 
             <section className={s.panel}>
               <h2 className={s.panelTitle}>בן/בת הזוג</h2>
