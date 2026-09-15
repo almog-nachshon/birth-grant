@@ -151,9 +151,18 @@ function incomeChecks(p: PersonRow): Check[] {
   ];
 }
 
-export function personProgress(row: PersonRow, label: string): SectionProgress {
+/**
+ * @param profileName השם מהפרופיל של המשתמש המחובר, כשההורה הזה הוא הוא.
+ * במסך הזה השדה קריא-בלבד ומוזן מהפרופיל, ולכן שורת המשימה יכולה להישאר
+ * בלי display_name משלה — וזה לא אומר שחסר נתון.
+ */
+export function personProgress(
+  row: PersonRow,
+  label: string,
+  profileName?: string | null,
+): SectionProgress {
   const checks: Check[] = [
-    { label: 'שם', done: Boolean(row.display_name?.trim()) },
+    { label: 'שם', done: Boolean(row.display_name?.trim() || profileName?.trim()) },
     { label: 'סוג העסקה', done: true }, // תמיד יש ברירת מחדל
     ...incomeChecks(row),
   ];
@@ -164,6 +173,33 @@ export function personProgress(row: PersonRow, label: string): SectionProgress {
     });
   }
   return score(row.role, label, checks);
+}
+
+/**
+ * נכות היא חלק אופציונלי: מי שלא סימן שום נכות אינו "חסר נתונים".
+ * ברגע שסומנה נכות, האחוז הופך לנתון חסר — הוא זה שפותח זכויות.
+ */
+export function disabilityProgress(rows: PersonRow[]): SectionProgress {
+  const checks: Check[] = [];
+
+  for (const row of rows) {
+    const who = row.role === 'birthing_parent' ? 'היולדת' : 'בן/בת הזוג';
+    const bl = row.extra?.hasDisabilityBL || row.disability_percent_bl != null;
+    const mod = row.extra?.hasDisabilityMOD || row.disability_percent_mod != null;
+
+    checks.push({
+      label: `אחוז נכות כללית — ${who}`,
+      done: row.disability_percent_bl != null,
+      skip: !bl,
+    });
+    checks.push({
+      label: `אחוז נכות אגף השיקום — ${who}`,
+      done: row.disability_percent_mod != null,
+      skip: !mod,
+    });
+  }
+
+  return score('disability', 'נכות', checks);
 }
 
 /** הפרופיל של המשתמש עצמו: מי הוא בתיק ואיך יוצרים איתו קשר. */

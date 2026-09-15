@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   DOCUMENT_KINDS,
   birthProgress,
+  disabilityProgress,
   documentProgress,
   overallPercent,
   personProgress,
@@ -13,6 +14,8 @@ import {
   type PersonRow,
 } from '@/lib/case/profile';
 import { addWeeks } from '@/lib/engine/schedule';
+import { displayName, storageName } from '@/lib/storage-key';
+import { authorities, benefitsFor, CONFIDENCE_LABEL, type Authority } from '@/lib/disability';
 import type { EmploymentType, EntitlementResult } from '@/lib/engine/types';
 import s from './account.module.css';
 
@@ -82,8 +85,9 @@ export default function AccountTabs({
     () => [
       profileProgress(me, myRole),
       birthProgress(c),
-      personProgress(b, 'היולדת'),
-      personProgress(p, 'בן/בת הזוג'),
+      personProgress(b, 'היולדת', myRole === 'birthing_parent' ? me.fullName : null),
+      personProgress(p, 'בן/בת הזוג', myRole === 'partner' ? me.fullName : null),
+      disabilityProgress([b, p]),
       documentProgress(docKinds, [b, p]),
     ],
     [me, myRole, c, b, p, docKinds],
@@ -193,6 +197,7 @@ export default function AccountTabs({
       label: myRole === 'partner' ? 'בן/בת הזוג (אתה)' : 'בן/בת הזוג',
       pct: pctOf('partner'),
     },
+    { key: 'disability', label: 'נכות', pct: pctOf('disability') },
     { key: 'documents', label: 'מסמכים', pct: pctOf('documents') },
     { key: 'summary', label: 'סיכום', pct: null as number | null },
   ];
@@ -291,6 +296,9 @@ export default function AccountTabs({
               isMe={myRole === 'partner'}
               profileName={me.fullName}
             />
+          )}
+          {tab === 'disability' && (
+            <DisabilityTab b={b} setB={setB} p={p} setP={setP} />
           )}
           {tab === 'documents' && (
             <DocumentsTab
@@ -456,9 +464,6 @@ function PersonTab({
   const i = variant === 'birthing' ? 0 : 1;
   const set = <K extends keyof PersonRow>(key: K, value: PersonRow[K]) =>
     setPerson((prev) => ({ ...prev, [key]: value }));
-  const setExtra = (key: string, value: boolean) =>
-    setPerson((prev) => ({ ...prev, extra: { ...(prev.extra ?? {}), [key]: value } }));
-
   const employed = person.employment !== 'unemployed';
   const isEmployee = person.employment === 'employee' || person.employment === 'both';
   const isSelf = person.employment === 'self_employed' || person.employment === 'both';
@@ -691,72 +696,6 @@ function PersonTab({
         </div>
       )}
 
-      <div className={s.subBlock}>
-        <p className={s.subTitle}>נכות מוכרת</p>
-        <p className={s.hint}>
-          פותח זכויות שרוב האנשים לא יודעים עליהן — חלקן לא ניתנות אוטומטית ודורשות בקשה יזומה.
-          חלק מהזכויות נפתחות רק מעל אחוז מסוים, ולכן שווה למלא את האחוז ולא רק לסמן.
-        </p>
-
-        <label className={s.check}>
-          <input
-            type="checkbox"
-            checked={person.extra?.hasDisabilityBL ?? false}
-            onChange={(e) => setExtra('hasDisabilityBL', e.target.checked)}
-          />
-          <span>נכות כללית מביטוח לאומי</span>
-        </label>
-        {person.extra?.hasDisabilityBL && (
-          <Field label="אחוז נכות משוקלל — ביטוח לאומי" hint="כפי שמופיע בהודעה על הזכאות">
-            <input
-              type="number"
-              min={0}
-              max={100}
-              className={s.input}
-              value={person.disability_percent_bl ?? ''}
-              onChange={(e) =>
-                set('disability_percent_bl', e.target.value === '' ? null : Number(e.target.value))
-              }
-            />
-          </Field>
-        )}
-
-        <label className={s.check}>
-          <input
-            type="checkbox"
-            checked={person.extra?.hasDisabilityMOD ?? false}
-            onChange={(e) => setExtra('hasDisabilityMOD', e.target.checked)}
-          />
-          <span>נכות מוכרת באגף השיקום (משרד הביטחון)</span>
-        </label>
-        {person.extra?.hasDisabilityMOD && (
-          <Field label="אחוז נכות משוקלל — אגף השיקום" hint="כפי שמופיע בפרוטוקול הוועדה">
-            <input
-              type="number"
-              min={0}
-              max={100}
-              className={s.input}
-              value={person.disability_percent_mod ?? ''}
-              onChange={(e) =>
-                set('disability_percent_mod', e.target.value === '' ? null : Number(e.target.value))
-              }
-            />
-          </Field>
-        )}
-
-        <label className={s.check}>
-          <input
-            type="checkbox"
-            checked={person.extra?.hasDisabilityWorkInjury ?? false}
-            onChange={(e) => setExtra('hasDisabilityWorkInjury', e.target.checked)}
-          />
-          <span>נכות מעבודה</span>
-        </label>
-
-        {(person.extra?.hasDisabilityBL || person.extra?.hasDisabilityMOD) && (
-          <DisabilityItems person={person} setPerson={setPerson} />
-        )}
-      </div>
     </section>
   );
 }
@@ -791,8 +730,8 @@ function DocumentsTab({
     try {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
-      const safeName = file.name.replace(/[^\w.\-֐-׿ ]/g, '_').slice(-80);
-      const path = `case/${caseId}/${crypto.randomUUID()}-${safeName}`;
+      // המפתח ASCII בלבד; השם המקורי נשמר לתצוגה
+      const path = `case/${caseId}/${crypto.randomUUID()}-${storageName(file.name)}`;
 
       const { error: upErr } = await supabase.storage
         .from('case-docs')
@@ -806,7 +745,7 @@ function DocumentsTab({
           caseId,
           kind,
           storagePath: path,
-          filename: safeName,
+          filename: displayName(file.name),
           mime: file.type,
           size: file.size,
         }),
@@ -1008,6 +947,178 @@ function LeaveDates({
  * האחוז המשוקלל אינו סכום הליקויים — ועדה רפואית מחשבת אותו בנוסחה
  * משוקללת — ולכן הרשימה כאן היא תיעוד בלבד ואינה מסכמת דבר.
  */
+/* ── טאב נכות ──────────────────────────────────────
+ * הנתונים האלה ישבו קודם בתוך הטאב של כל הורה, ושם הם נבלעו בין השכר
+ * לחלוקת השבועות. הם עברו לכאן כי הם פותחים ענף זכויות שלם — ובעיקר
+ * כי מולם צריך להציג מה בכלל אפשר לקבל, וזה לא נכנס לטופס.
+ */
+function DisabilityTab({
+  b,
+  setB,
+  p,
+  setP,
+}: {
+  b: PersonRow;
+  setB: (fn: (prev: PersonRow) => PersonRow) => void;
+  p: PersonRow;
+  setP: (fn: (prev: PersonRow) => PersonRow) => void;
+}) {
+  const pair = [
+    { person: b, setPerson: setB, who: 'היולדת' },
+    { person: p, setPerson: setP, who: 'בן/בת הזוג' },
+  ];
+
+  const anyBL = pair.some(({ person }) => hasBL(person));
+  const anyMOD = pair.some(({ person }) => hasMOD(person));
+
+  // האחוז הגבוה מבין ההורים — הוא שקובע אילו הטבות להציג
+  const pctOf = (key: 'bl' | 'mod') => {
+    const values = pair
+      .map(({ person }) => (key === 'bl' ? person.disability_percent_bl : person.disability_percent_mod))
+      .filter((v): v is number => v != null);
+    return values.length ? Math.max(...values) : null;
+  };
+
+  const shown = authorities.filter((a) => (a.key === 'bl' ? anyBL : anyMOD));
+
+  return (
+    <section className={s.form}>
+      <p className={s.formIntro}>
+        נכות מוכרת פותחת זכויות שרוב האנשים לא יודעים עליהן, וחלקן לא ניתנות אוטומטית אלא
+        דורשות בקשה יזומה. חלק מהזכויות נפתחות רק מעל אחוז מסוים — לכן שווה למלא את האחוז
+        ולא רק לסמן את התיבה.
+      </p>
+
+      {pair.map(({ person, setPerson, who }) => (
+        <PersonDisability key={who} person={person} setPerson={setPerson} who={who} />
+      ))}
+
+      {shown.length === 0 ? (
+        <p className={s.hint} style={{ marginTop: 22 }}>
+          לא סומנה נכות. אם יש נכות מוכרת לאחד מכם — סמנו אותה למעלה, וכאן תופיע רשימת
+          ההטבות והמענקים של אותה רשות.
+        </p>
+      ) : (
+        shown.map((a) => <AuthorityPanel key={a.key} authority={a} percent={pctOf(a.key)} />)
+      )}
+    </section>
+  );
+}
+
+const hasBL = (row: PersonRow) =>
+  Boolean(row.extra?.hasDisabilityBL) || row.disability_percent_bl != null;
+const hasMOD = (row: PersonRow) =>
+  Boolean(row.extra?.hasDisabilityMOD) || row.disability_percent_mod != null;
+
+function PersonDisability({
+  person,
+  setPerson,
+  who,
+}: {
+  person: PersonRow;
+  setPerson: (fn: (prev: PersonRow) => PersonRow) => void;
+  who: string;
+}) {
+  const set = <K extends keyof PersonRow>(key: K, value: PersonRow[K]) =>
+    setPerson((prev) => ({ ...prev, [key]: value }));
+  const setExtra = (key: string, value: boolean) =>
+    setPerson((prev) => ({ ...prev, extra: { ...(prev.extra ?? {}), [key]: value } }));
+
+  const pct = (key: 'disability_percent_bl' | 'disability_percent_mod', label: string, hint: string) => (
+    <Field label={label} hint={hint}>
+      <input
+        type="number"
+        min={0}
+        max={100}
+        className={s.input}
+        value={person[key] ?? ''}
+        onChange={(e) => set(key, e.target.value === '' ? null : Number(e.target.value))}
+      />
+    </Field>
+  );
+
+  return (
+    <div className={s.subBlock}>
+      <p className={s.subTitle}>{who}</p>
+
+      <label className={s.check}>
+        <input
+          type="checkbox"
+          checked={person.extra?.hasDisabilityBL ?? false}
+          onChange={(e) => setExtra('hasDisabilityBL', e.target.checked)}
+        />
+        <span>נכות כללית מביטוח לאומי</span>
+      </label>
+      {hasBL(person) && pct('disability_percent_bl', 'אחוז נכות משוקלל — ביטוח לאומי', 'כפי שמופיע בהודעה על הזכאות')}
+
+      <label className={s.check}>
+        <input
+          type="checkbox"
+          checked={person.extra?.hasDisabilityMOD ?? false}
+          onChange={(e) => setExtra('hasDisabilityMOD', e.target.checked)}
+        />
+        <span>נכות מוכרת באגף השיקום (משרד הביטחון)</span>
+      </label>
+      {hasMOD(person) && pct('disability_percent_mod', 'אחוז נכות משוקלל — אגף השיקום', 'כפי שמופיע בפרוטוקול הוועדה')}
+
+      <label className={s.check}>
+        <input
+          type="checkbox"
+          checked={person.extra?.hasDisabilityWorkInjury ?? false}
+          onChange={(e) => setExtra('hasDisabilityWorkInjury', e.target.checked)}
+        />
+        <span>נכות מעבודה</span>
+      </label>
+
+      {(hasBL(person) || hasMOD(person)) && <DisabilityItems person={person} setPerson={setPerson} />}
+    </div>
+  );
+}
+
+/** מה אפשר לקבל מרשות אחת. רמת הוודאות נוסעת עם הממצא ולא נמחקת בתצוגה. */
+function AuthorityPanel({ authority, percent }: { authority: Authority; percent: number | null }) {
+  const list = benefitsFor(authority.key, percent);
+
+  return (
+    <div className={s.subBlock}>
+      <p className={s.subTitle}>{authority.name}</p>
+      <p className={s.hint}>{authority.intro}</p>
+      <p className={s.hint}>
+        פנייה: {authority.contact}
+        {authority.url && (
+          <>
+            {' · '}
+            <a href={authority.url} target="_blank" rel="noopener noreferrer">
+              האתר הרשמי
+            </a>
+          </>
+        )}
+      </p>
+
+      {list.map((x) => (
+        <article key={x.key} className={s.benefit}>
+          <div className={s.benefitHead}>
+            <strong>{x.title}</strong>
+            <span className={s.benefitTag} data-c={x.confidence}>
+              {CONFIDENCE_LABEL[x.confidence]}
+            </span>
+          </div>
+          <p className={s.benefitBody}>{x.body}</p>
+          {x.min_percent != null && (
+            <p className={s.benefitMeta}>נפתחת מ-{x.min_percent}% נכות ומעלה</p>
+          )}
+          {x.how && <p className={s.benefitMeta}>איך: {x.how}</p>}
+          {x.source_url && (
+            <a className={s.benefitLink} href={x.source_url} target="_blank" rel="noopener noreferrer">
+              המקור
+            </a>
+          )}
+        </article>
+      ))}
+    </div>
+  );
+}
+
 function DisabilityItems({
   person,
   setPerson,

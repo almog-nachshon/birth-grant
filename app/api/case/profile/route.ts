@@ -364,6 +364,17 @@ export async function PATCH(request: NextRequest) {
   if (!fresh) return NextResponse.json({ error: 'טעינה מחדש נכשלה' }, { status: 500 });
 
   const profile = toCaseProfile(fresh.caseRow, fresh.persons);
+
+  // ההורה שהוא המשתמש המחובר לא מזין שם משלו — השדה קריא-בלבד ומוזן
+  // מהפרופיל. בלי ההשלמה הזו המשימות שלו היו נקראות "בן/בת הזוג".
+  const meName = body.me?.fullName ?? null;
+  const names = Object.fromEntries(
+    fresh.persons.map((p) => [
+      p.role,
+      p.display_name ?? (p.user_id === user.id ? meName : null),
+    ]),
+  );
+
   let sync = null;
   if (profile) {
     try {
@@ -371,7 +382,7 @@ export async function PATCH(request: NextRequest) {
         supabase,
         fresh.caseRow.id,
         profile,
-        Object.fromEntries(fresh.persons.map((p) => [p.role, p.display_name])),
+        names,
       );
     } catch (err) {
       // הפרופיל נשמר; רק בניית המשימות נכשלה. לא מאבדים את הקלט של המשתמש.

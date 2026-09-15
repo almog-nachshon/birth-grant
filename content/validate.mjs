@@ -5,6 +5,9 @@ import { readFileSync } from 'node:fs';
 const catalog = JSON.parse(readFileSync(new URL('./catalog.json', import.meta.url), 'utf8'));
 const ratesDoc = JSON.parse(readFileSync(new URL('./rates.json', import.meta.url), 'utf8'));
 const changelog = JSON.parse(readFileSync(new URL('./changelog.json', import.meta.url), 'utf8'));
+const disability = JSON.parse(
+  readFileSync(new URL('./disability-benefits.json', import.meta.url), 'utf8'),
+);
 
 const errors = [];
 const warnings = [];
@@ -71,6 +74,39 @@ for (const t of catalog.tasks) {
   }
 }
 
+// --- הטבות נכות ---
+// ממצא שאינו verified מוצג באתר עם תג "טעון אימות"/"שאלה פתוחה". לכן
+// confidence חייב להיות תקין: ערך לא מוכר היה מוצג בלי תג, כלומר כעובדה.
+{
+  const VALID_CONF = new Set(['verified', 'secondary', 'open']);
+  const authorityKeys = new Set(disability.authorities.map((a) => a.key));
+
+  for (const a of disability.authorities) {
+    if (!a.name || !a.intro || !a.contact) errors.push(`רשות "${a.key}": חסר שם, מבוא או דרך פנייה`);
+  }
+
+  const seenBenefits = new Set();
+  for (const x of disability.benefits) {
+    const at = `הטבה "${x.key}"`;
+    if (seenBenefits.has(x.key)) errors.push(`מפתח הטבה כפול: ${x.key}`);
+    seenBenefits.add(x.key);
+
+    if (!authorityKeys.has(x.authority)) errors.push(`${at}: רשות לא מוכרת "${x.authority}"`);
+    if (!x.title || !x.body) errors.push(`${at}: חסרה כותרת או גוף`);
+    if (!VALID_CONF.has(x.confidence)) errors.push(`${at}: confidence לא מוכר "${x.confidence}"`);
+    if (x.min_percent != null && (x.min_percent < 0 || x.min_percent > 100)) {
+      errors.push(`${at}: אחוז סף לא חוקי ${x.min_percent}`);
+    }
+    if (x.source_url && !String(x.source_url).startsWith('https://')) {
+      errors.push(`${at}: מקור שאינו https`);
+    }
+    // ממצא שאינו מאומת חייב לומר למשתמש מה לעשות איתו
+    if (x.confidence !== 'verified' && !x.how) {
+      warnings.push(`${at}: ${x.confidence} בלי הנחיית "איך" — המשתמש לא יידע מה לברר`);
+    }
+  }
+}
+
 // --- יומן שינויים ---
 // האתר מציג את גרסת הקטלוג בכותרת התחתונה ומקשר ליומן. אם הקטלוג
 // עודכן בלי ערך מתאים ביומן, המשתמש רואה גרסה שאין לה הסבר.
@@ -114,6 +150,12 @@ for (const t of catalog.tasks) {
   byPhase[t.phase] = (byPhase[t.phase] ?? 0) + 1;
 }
 
+const conf = {};
+for (const x of disability.benefits) conf[x.confidence] = (conf[x.confidence] ?? 0) + 1;
+console.log(
+  `הטבות נכות: ${disability.benefits.length} ב-${disability.authorities.length} רשויות`,
+  conf,
+);
 console.log(`יומן שינויים: ${changelog.entries.length} ערכים, אחרון ${changelog.entries[0]?.date}`);
 console.log(`קטלוג ${catalog.version} — ${catalog.phases.length} פאזות, ${catalog.tasks.length} משימות, ${ratesDoc.rates.length} שיעורים`);
 console.log('לפי תפקיד:', byRole);

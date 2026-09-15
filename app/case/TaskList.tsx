@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { displayName, storageName } from '@/lib/storage-key';
 import s from './case.module.css';
 
 interface TaskLink {
@@ -96,9 +97,8 @@ export default function TaskList({
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
 
-      // שם קובץ מנוקה — לא סומכים על מה שהמערכת של המשתמש נותנת
-      const safeName = file.name.replace(/[^\w.\-֐-׿ ]/g, '_').slice(-80);
-      const path = `case/${caseId}/${crypto.randomUUID()}-${safeName}`;
+      // המפתח ASCII בלבד; השם המקורי נשמר לתצוגה
+      const path = `case/${caseId}/${crypto.randomUUID()}-${storageName(file.name)}`;
 
       // העלאה ישירה ל-Storage: הקובץ לא עובר דרך השרת שלנו
       const { error: upErr } = await supabase.storage
@@ -113,7 +113,7 @@ export default function TaskList({
           caseId,
           taskId,
           storagePath: path,
-          filename: safeName,
+          filename: displayName(file.name),
           mime: file.type,
           size: file.size,
         }),
