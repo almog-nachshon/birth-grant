@@ -76,14 +76,18 @@ export default async function AccountPage() {
 
   let caseRow = BLANK_CASE;
   let persons = [blankPerson('birthing_parent'), blankPerson('partner')];
-  let docKinds: string[] = [];
+  let docs: Array<{ id: string; kind: string; filename: string }> = [];
   let taskStats = { total: 0, done: 0, nextDue: null as string | null };
 
   if (membership) {
     const [{ data: c }, { data: p }, { data: d }, { data: t }] = await Promise.all([
       supabase.from('cases').select(CASE_COLS).eq('id', membership.case_id).single(),
       supabase.from('case_persons').select(PERSON_COLS).eq('case_id', membership.case_id).order('role'),
-      supabase.from('case_documents').select('kind').eq('case_id', membership.case_id),
+      supabase
+        .from('case_documents')
+        .select('id, kind, filename')
+        .eq('case_id', membership.case_id)
+        .order('created_at'),
       supabase.from('case_tasks').select('status, due_at').eq('case_id', membership.case_id),
     ]);
 
@@ -94,7 +98,7 @@ export default async function AccountPage() {
         (role) => rows.find((r) => r.role === role) ?? blankPerson(role),
       );
     }
-    docKinds = (d ?? []).map((row) => row.kind as string);
+    docs = (d ?? []) as Array<{ id: string; kind: string; filename: string }>;
 
     const tasks = t ?? [];
     const open = tasks
@@ -131,7 +135,7 @@ export default async function AccountPage() {
       caseRow={caseRow}
       birthing={birthing}
       partner={partner}
-      docKinds={docKinds}
+      docs={docs}
       entitlements={entitlements}
       taskStats={taskStats}
     />

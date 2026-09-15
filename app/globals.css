@@ -3,10 +3,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Heebo:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg: #FCFBF9;
-  --bg-warm: #FEF5EC;
-  --bg-cool: #EFF6FA;
+  /* האתר בהיר תמיד. color-scheme מוריש את זה גם לפקדים של הדפדפן —
+     בלעדיו שדה תאריך ותיבת סימון ממשיכים להיצבע כהה במערכת כהה. */
+  color-scheme: light;
+
+  --bg: #FFFFFF;
+  --bg-warm: #FFF4E9;
+  --bg-cool: #ECF5FB;
   --paper: #FFFFFF;
+
+  /* משיחות הרקע — אפרסק מימין, תכלת משמאל. רק הן ושכבת הדפוס
+     מפרידות בין הרקע לכרטיסים, ולכן הן עדינות אבל לא אפס. */
+  --wash-warm: #FFE6CE;
+  --wash-cool: #DEEEF9;
   --ink: #16242E;
   --ink-soft: #55656F;
   --ink-faint: #8A97A0;
@@ -27,10 +36,10 @@
   --alert: #B23A22;
   --alert-bg: #FBE9E4;
 
-  --radius: 9px;
-  --radius-lg: 18px;
-  --shadow: 0 1px 2px rgba(22, 36, 46, .04), 0 8px 24px -12px rgba(22, 36, 46, .12);
-  --shadow-lg: 0 2px 4px rgba(22, 36, 46, .04), 0 24px 48px -20px rgba(22, 36, 46, .18);
+  --radius: 12px;
+  --radius-lg: 22px;
+  --shadow: 0 1px 2px rgba(120, 78, 40, .05), 0 8px 24px -12px rgba(26, 101, 149, .14);
+  --shadow-lg: 0 2px 4px rgba(120, 78, 40, .05), 0 24px 48px -20px rgba(26, 101, 149, .2);
 
   /* Rubik לכותרות — סופי אותיות מעוגלים, קריא מאוד בעברית.
      serif-- נשמר כשם משתנה כדי לא לשבור מודולים שמשתמשים בו. */
@@ -46,8 +55,12 @@ html, body { margin: 0; padding: 0; }
 
 body {
   background-color: var(--bg);
-  background-image: url('/pattern-nursery.svg');
-  background-size: 260px 260px;
+  background-image:
+    url('/pattern-nursery.svg'),
+    radial-gradient(58rem 34rem at 96% -8%, var(--wash-warm), transparent 62%),
+    radial-gradient(54rem 32rem at 2% -6%, var(--wash-cool), transparent 64%);
+  background-size: 260px 260px, auto, auto;
+  background-repeat: repeat, no-repeat, no-repeat;
   background-attachment: fixed;
   color: var(--ink);
   font-family: var(--sans);
@@ -137,40 +150,3 @@ a { color: inherit; }
   * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 
-/* ── מצב כהה ─────────────────────────────────────── */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #101A21;
-    --bg-warm: #221913;
-    --bg-cool: #16242E;
-    --paper: #18242C;
-    --ink: #E8EEF2;
-    --ink-soft: #A2B0BA;
-    --ink-faint: #76858F;
-    --line: #27353E;
-    --line-soft: #1F2C34;
-    --accent: #74B4DA;
-    --accent-strong: #1F6F9F;
-    --accent-bg: #172B38;
-    --warm: #E07E36;
-    --warm-vivid: #F0995A;
-    --on-warm: #14100B;
-    --on-accent: #FFFFFF;
-    --warm-bg: #2C1F15;
-    --done: #6FB894;
-    --done-bg: #16281F;
-    --alert: #E08670;
-    --alert-bg: #2C1A16;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
-    --shadow-lg: 0 2px 4px rgba(0,0,0,.3), 0 24px 48px -20px rgba(0,0,0,.6);
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #101A21; --bg-warm: #221913; --bg-cool: #16242E; --paper: #18242C;
-  --ink: #E8EEF2; --ink-soft: #A2B0BA; --ink-faint: #76858F;
-  --line: #27353E; --line-soft: #1F2C34;
-  --accent: #74B4DA; --accent-strong: #1F6F9F; --accent-bg: #172B38;
-  --warm: #E07E36; --warm-vivid: #F0995A; --on-warm: #14100B; --on-accent: #FFFFFF; --warm-bg: #2C1F15;
-  --done: #6FB894; --done-bg: #16281F;
-  --alert: #E08670; --alert-bg: #2C1A16;
-}

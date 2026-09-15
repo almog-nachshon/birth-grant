@@ -19,6 +19,12 @@ import { authorities, benefitsFor, CONFIDENCE_LABEL, type Authority } from '@/li
 import type { EmploymentType, EntitlementResult } from '@/lib/engine/types';
 import s from './account.module.css';
 
+interface CaseDoc {
+  id: string;
+  kind: string;
+  filename: string;
+}
+
 const HMOS = ['כללית', 'מכבי', 'מאוחדת', 'לאומית'];
 const MAX_BYTES = 15 * 1024 * 1024;
 const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png', 'image/heic', 'image/webp'];
@@ -46,7 +52,7 @@ export default function AccountTabs({
   caseRow,
   birthing: initialBirthing,
   partner: initialPartner,
-  docKinds: initialDocKinds,
+  docs: initialDocs,
   entitlements,
   taskStats,
 }: {
@@ -57,7 +63,7 @@ export default function AccountTabs({
   caseRow: CaseRow;
   birthing: PersonRow;
   partner: PersonRow;
-  docKinds: string[];
+  docs: CaseDoc[];
   entitlements: EntitlementResult | null;
   taskStats: { total: number; done: number; nextDue: string | null };
 }) {
@@ -69,7 +75,9 @@ export default function AccountTabs({
   const [c, setC] = useState(caseRow);
   const [b, setB] = useState(initialBirthing);
   const [p, setP] = useState(initialPartner);
-  const [docKinds, setDocKinds] = useState(initialDocKinds);
+  const [docs, setDocs] = useState(initialDocs);
+  // השלמוּת נמדדת בסוגים: שלושה תלושים הם עדיין "תלוש שכר" אחד שהושלם
+  const docKinds = useMemo(() => docs.map((d) => d.kind), [docs]);
   // מזהה התיק האמיתי. נוצר בשרת בשמירה הראשונה, ולכן חייב לחזור משם
   // ולא להישאר על ערך ה-placeholder של הפרופיל הריק.
   const [caseId, setCaseId] = useState(caseRow.id);
@@ -304,8 +312,8 @@ export default function AccountTabs({
             <DocumentsTab
               caseId={caseId}
               hasCase={caseId !== 'new'}
-              docKinds={docKinds}
-              onUploaded={(kind) => setDocKinds((prev) => [...prev, kind])}
+              docs={docs}
+              onUploaded={(doc) => setDocs((prev) => [...prev, doc])}
             />
           )}
           {tab === 'summary' && (
@@ -703,26 +711,33 @@ function PersonTab({
 function DocumentsTab({
   caseId,
   hasCase,
-  docKinds,
+  docs,
   onUploaded,
 }: {
   caseId: string;
   hasCase: boolean;
-  docKinds: string[];
-  onUploaded: (kind: string) => void;
+  docs: CaseDoc[];
+  onUploaded: (doc: CaseDoc) => void;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const present = new Set(docKinds);
 
-  async function upload(kind: string, file: File) {
+  /**
+   * מעלה את כל הקבצים שנבחרו, לא רק את הראשון: "תלוש שכר" הוא שלושה
+   * תלושים, ו"פרוטוקול ועדה" יכול להיות כמה עמודים סרוקים. כל קובץ הוא
+   * שורה משלו — מסמך קיים אינו נדרס.
+   */
+  async function upload(kind: string, files: File[]) {
     setError('');
-    if (file.size > MAX_BYTES) {
-      setError(`הקובץ גדול מדי (${(file.size / 1048576).toFixed(1)}MB). המגבלה 15MB.`);
+
+    const tooBig = files.find((f) => f.size > MAX_BYTES);
+    if (tooBig) {
+      setError(`${tooBig.name} גדול מדי (${(tooBig.size / 1048576).toFixed(1)}MB). המגבלה 15MB.`);
       return;
     }
-    if (!ALLOWED.includes(file.type)) {
-      setError('סוג קובץ לא נתמך. אפשר PDF או תמונה.');
+    const badType = files.find((f) => !ALLOWED.includes(f.type));
+    if (badType) {
+      setError(`${badType.name} אינו סוג קובץ נתמך. אפשר PDF או תמונה.`);
       return;
     }
 
@@ -730,29 +745,34 @@ function DocumentsTab({
     try {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
-      // המפתח ASCII בלבד; השם המקורי נשמר לתצוגה
-      const path = `case/${caseId}/${crypto.randomUUID()}-${storageName(file.name)}`;
 
-      const { error: upErr } = await supabase.storage
-        .from('case-docs')
-        .upload(path, file, { contentType: file.type, upsert: false });
-      if (upErr) throw upErr;
+      // בטור ולא במקביל: כישלון באמצע משאיר את מה שכבר עלה רשום כהלכה,
+      // והמשתמש רואה איזה קובץ נפל במקום ארבע שגיאות בבת אחת.
+      for (const file of files) {
+        // המפתח ASCII בלבד; השם המקורי נשמר לתצוגה
+        const path = `case/${caseId}/${crypto.randomUUID()}-${storageName(file.name)}`;
 
-      const res = await fetch('/api/documents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          caseId,
-          kind,
-          storagePath: path,
-          filename: displayName(file.name),
-          mime: file.type,
-          size: file.size,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'רישום המסמך נכשל');
-      onUploaded(kind);
+        const { error: upErr } = await supabase.storage
+          .from('case-docs')
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (upErr) throw upErr;
+
+        const res = await fetch('/api/documents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            caseId,
+            kind,
+            storagePath: path,
+            filename: displayName(file.name),
+            mime: file.type,
+            size: file.size,
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error ?? 'רישום המסמך נכשל');
+        onUploaded(json.document as CaseDoc);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'ההעלאה נכשלה');
     } finally {
@@ -775,35 +795,45 @@ function DocumentsTab({
   return (
     <section className={s.form}>
       <p className={s.formIntro}>
-        הקבצים נשמרים מוצפנים ונגישים רק לכם. הם לא נשלחים לאף גורם, ואף מסמך לא מקבל כתובת
-        ציבורית — ההורדה היא דרך קישור זמני בלבד.
+        אפשר להעלות כמה קבצים לכל שורה — שלושה תלושי שכר, למשל, או פרוטוקול סרוק בכמה
+        עמודים. הקבצים נשמרים מוצפנים ונגישים רק לכם, לא נשלחים לאף גורם, ואף מסמך לא מקבל
+        כתובת ציבורית — ההורדה היא דרך קישור זמני בלבד.
       </p>
 
       <div className={s.docs}>
         {DOCUMENT_KINDS.map((d) => {
-          const uploaded = present.has(d.kind);
+          const mine = docs.filter((x) => x.kind === d.kind);
           return (
-            <div key={d.kind} className={s.docSlot} data-done={uploaded}>
+            <div key={d.kind} className={s.docSlot} data-done={mine.length > 0}>
               <div className={s.docHead}>
-                <span className={s.docCheck} aria-hidden>{uploaded ? '✓' : ''}</span>
+                <span className={s.docCheck} aria-hidden>{mine.length ? '✓' : ''}</span>
                 <div>
                   <p className={s.docLabel}>
                     {d.label}
                     {d.required && <span className={s.docReq}>נדרש</span>}
+                    {mine.length > 1 && <span className={s.docCount}>{mine.length} קבצים</span>}
                   </p>
                   <p className={s.hint}>{d.hint}</p>
+                  {mine.length > 0 && (
+                    <ul className={s.docFiles}>
+                      {mine.map((x) => (
+                        <li key={x.id}>{x.filename}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
               <label className={s.docBtn}>
-                {busy === d.kind ? 'מעלה…' : uploaded ? 'החלפה' : 'העלאה'}
+                {busy === d.kind ? 'מעלה…' : mine.length ? 'הוספת קובץ' : 'העלאה'}
                 <input
                   type="file"
                   accept=".pdf,image/*"
+                  multiple
                   hidden
                   disabled={busy !== null}
                   onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) void upload(d.kind, file);
+                    const chosen = Array.from(e.target.files ?? []);
+                    if (chosen.length) void upload(d.kind, chosen);
                     e.target.value = '';
                   }}
                 />
