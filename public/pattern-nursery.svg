@@ -51,7 +51,7 @@
     </g>
   </defs>
 
-  <g stroke="#E08340" stroke-opacity=".22">
+  <g stroke="#E08340" stroke-opacity=".24">
     <use href="#pacifier" transform="translate(34,38) rotate(-14)"/>
     <use href="#star"     transform="translate(158,26) rotate(12)"/>
     <use href="#heart"    transform="translate(96,118) rotate(-8)"/>
@@ -59,7 +59,7 @@
     <use href="#bear"     transform="translate(46,196) rotate(6)"/>
     <use href="#star"     transform="translate(196,224) rotate(-18)"/>
   </g>
-  <g stroke="#3F86B4" stroke-opacity=".21">
+  <g stroke="#3F86B4" stroke-opacity=".23">
     <use href="#cloud"    transform="translate(104,44) rotate(4)"/>
     <use href="#rattle"   transform="translate(226,44) rotate(-20)"/>
     <use href="#foot"     transform="translate(30,110) rotate(-24)"/>

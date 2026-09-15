@@ -7,27 +7,32 @@
      בלעדיו שדה תאריך ותיבת סימון ממשיכים להיצבע כהה במערכת כהה. */
   color-scheme: light;
 
-  --bg: #FFFFFF;
-  --bg-warm: #FFF4E9;
-  --bg-cool: #ECF5FB;
+  /* הקנבס מקבל גוון, הכרטיסים נשארים לבנים. שניהם לבנים = כרטיס
+     בלתי נראה, וזה בדיוק מה שקרה כשהרקע היה #FFFFFF. */
+  --bg: #EFF4F9;
+  --bg-warm: #FFF3E6;
+  --bg-cool: #E7F1F9;
   --paper: #FFFFFF;
 
   /* משיחות הרקע — אפרסק מימין, תכלת משמאל. רק הן ושכבת הדפוס
      מפרידות בין הרקע לכרטיסים, ולכן הן עדינות אבל לא אפס. */
-  --wash-warm: #FFE6CE;
-  --wash-cool: #DEEEF9;
-  --ink: #16242E;
-  --ink-soft: #55656F;
-  --ink-faint: #8A97A0;
-  --line: #E4E9ED;
-  --line-soft: #EFF2F5;
+  --wash-warm: #FDE3C9;
+  --wash-cool: #DCEAF6;
+  --ink: #13212B;
+  --ink-soft: #46555F;
+  /* ink-faint הוא טקסט העזר מתחת לכל שדה. ב-#8A97A0 הוא עמד על יחס
+     ניגודיות 2.99 מול לבן — הרבה מתחת ל-4.5 שהתקן דורש. הערך הזה הוא
+     הבהיר ביותר שעובר AA גם על הנייר (5.17) וגם על הקנבס (4.68). */
+  --ink-faint: #616F79;
+  --line: #D6DFE7;
+  --line-soft: #E6ECF2;
 
   /* כחול — מבנה, קישורים, כותרות. כתום — פעולה וחום. */
-  --accent: #1A6595;
-  --accent-strong: #14527A;
-  --accent-bg: #E7F1F8;
-  --warm: #C25A17;
-  --warm-vivid: #EE8033;
+  --accent: #175A86;
+  --accent-strong: #114765;
+  --accent-bg: #E2EEF7;
+  --warm: #B4520F;
+  --warm-vivid: #E2761F;
   --on-warm: #FFFFFF;
   --on-accent: #FFFFFF;
   --warm-bg: #FDEFE2;
@@ -38,8 +43,8 @@
 
   --radius: 12px;
   --radius-lg: 22px;
-  --shadow: 0 1px 2px rgba(120, 78, 40, .05), 0 8px 24px -12px rgba(26, 101, 149, .14);
-  --shadow-lg: 0 2px 4px rgba(120, 78, 40, .05), 0 24px 48px -20px rgba(26, 101, 149, .2);
+  --shadow: 0 1px 2px rgba(19, 33, 43, .06), 0 10px 24px -14px rgba(19, 33, 43, .28);
+  --shadow-lg: 0 2px 6px rgba(19, 33, 43, .07), 0 28px 52px -22px rgba(19, 33, 43, .32);
 
   /* Rubik לכותרות — סופי אותיות מעוגלים, קריא מאוד בעברית.
      serif-- נשמר כשם משתנה כדי לא לשבור מודולים שמשתמשים בו. */
