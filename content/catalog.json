@@ -1,5 +1,5 @@
 {
-  "version": "2026.2.0",
+  "version": "2026.3.0",
   "locale": "he",
   "$comment": "קטלוג הזכויות. שני צירים עצמאיים: role (מי ההורה) ו-applies_when.employment (סוג העסקה). כל שילוב מייצר רשימת משימות אחרת. סכומים מוצבים מ-rates.json בתבנית {{key}}.",
   "phases": [
@@ -53,6 +53,13 @@
       "title": "לוודא עמידה בתנאי הסף לדמי לידה",
       "body": "{{qualify_full_months_14}} מתוך 14 חודשי ביטוח (או {{qualify_full_months_22}} מתוך 22) = זכאות מלאה. {{qualify_half_months}} מתוך 14 = זכאות חלקית בלבד, {{qualify_half_weeks}} שבועות. רצף ביטוח ממעסיק קודם נספר גם הוא.",
       "requires_doc": false,
+      "links": [
+        {
+          "label": "תנאי הזכאות לדמי לידה — ביטוח לאומי",
+          "url": "https://www.btl.gov.il/benefits/maternity/Childbirth_Allowance/Pages/%D7%AA%D7%A0%D7%90%D7%99%20%D7%94%D7%96%D7%9B%D7%90%D7%95%D7%AA.aspx",
+          "kind": "info"
+        }
+      ],
       "date_rule": {
         "anchor": "due_date",
         "offset_weeks": -12,
@@ -159,6 +166,13 @@
       "body": "לשכירה — מכתב מעסיק. **לעצמאית אין נוסח רשמי ברור** ויש לברר טלפונית מול הסניף לפני ההגשה. בלי המסמך הזה טופס 360 לא מטופל.",
       "requires_doc": true,
       "doc_hint": "אישור על חזרת בן/בת הזוג לעיסוק",
+      "links": [
+        {
+          "label": "תנאי הזכאות לדמי לידה לאב/בן זוג",
+          "url": "https://www.btl.gov.il/benefits/maternity/dmeLedaLaav/Pages/tnaey%20zakaoot%20ledmeyleda%20laav.aspx",
+          "kind": "info"
+        }
+      ],
       "critical": true,
       "date_rule": {
         "anchor": "due_date",
@@ -175,7 +189,23 @@
       "title": "מילוי טופס 355 — תביעה לתשלום דמי לידה",
       "body": "ניתן להגיש כבר בהריון, עד {{form_355_early_weeks}} שבועות לפני התאריך המשוער, או מיד אחרי הלידה.",
       "requires_doc": false,
-      "source_url": "https://www.btl.gov.il/",
+      "links": [
+        {
+          "label": "מילוי טופס 355 מקוון",
+          "url": "https://govforms.gov.il/mw/forms/t355@btl.gov.il",
+          "kind": "online"
+        },
+        {
+          "label": "טופס 355 להורדה (PDF)",
+          "url": "https://www.btl.gov.il/%D7%98%D7%A4%D7%A1%D7%99%D7%9D%20%D7%95%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%D7%9D/Documents/t355.pdf",
+          "kind": "form"
+        },
+        {
+          "label": "תביעה לתשלום דמי לידה — gov.il",
+          "url": "https://www.gov.il/he/service/claim_for_birth_payment",
+          "kind": "info"
+        }
+      ],
       "date_rule": {
         "anchor": "due_date",
         "offset_weeks": -4,
@@ -194,7 +224,14 @@
       "title": "צירוף שומת מס / דוח הכנסות",
       "body": "המסמך שהתקבל מרואה החשבון. זה הנתון שקובע את גובה דמי הלידה.",
       "requires_doc": true,
-      "doc_hint": "שומת מס / דוח הכנסות"
+      "doc_hint": "שומת מס / דוח הכנסות",
+      "links": [
+        {
+          "label": "טופס 355 — רשימת המסמכים לצירוף",
+          "url": "https://www.btl.gov.il/%D7%98%D7%A4%D7%A1%D7%99%D7%9D%20%D7%95%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%D7%9D/Documents/t355.pdf",
+          "kind": "form"
+        }
+      ]
     },
     {
       "key": "form_355_bank",
@@ -216,6 +253,18 @@
       "title": "הגשת טופס 355 בפועל",
       "body": "אונליין באתר ביטוח לאומי, דואר, פקס או תיבת שירות בסניף. מומלץ להגיש בסמיכות זמנים לטופס 360 של בן/בת הזוג — כדי שביטוח לאומי יראה את חלוקת התקופה מראש ולא ישלם ביתר לצד הראשון.",
       "requires_doc": false,
+      "links": [
+        {
+          "label": "שליחת התביעה והמסמכים באתר",
+          "url": "https://b2b.btl.gov.il/BTL.ILG.Payments/DocumentsInfo.aspx",
+          "kind": "online"
+        },
+        {
+          "label": "אופן הגשת התביעה — ביטוח לאומי",
+          "url": "https://www.btl.gov.il/benefits/maternity/Childbirth_Allowance/Pages/%D7%90%D7%95%D7%A4%D7%9F%20%D7%94%D7%92%D7%A9%D7%AA%20%D7%94%D7%AA%D7%91%D7%99%D7%A2%D7%94.aspx",
+          "kind": "info"
+        }
+      ],
       "date_rule": {
         "anchor": "birth_date",
         "offset_days": 7,
@@ -234,6 +283,18 @@
       "title": "מילוי טופס 360 — דמי לידה לבן/בת זוג מחליף/ה",
       "body": "היולדת חייבת לקחת את {{birthing_parent_min_weeks}} השבועות הראשונים ואי אפשר לוותר עליהם. אחרי זה ניתן להעביר את **יתרת** {{maternity_total_weeks}} השבועות — כלומר עד 9 שבועות נוספים.",
       "requires_doc": false,
+      "links": [
+        {
+          "label": "טופס 360 להורדה (PDF)",
+          "url": "https://www.btl.gov.il/%D7%98%D7%A4%D7%A1%D7%99%D7%9D%20%D7%95%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%D7%9D/Documents/t360.pdf",
+          "kind": "form"
+        },
+        {
+          "label": "דמי לידה לאב — ביטוח לאומי",
+          "url": "https://www.btl.gov.il/benefits/maternity/dmeLedaLaav/Pages/hagashat%20tviha.aspx",
+          "kind": "info"
+        }
+      ],
       "date_rule": {
         "anchor": "birth_date",
         "offset_days": 7,
@@ -251,6 +312,13 @@
       "title": "לוודא תנאי סף — נספרים ליום הפסקת העבודה, לא ליום הלידה",
       "body": "{{qualify_full_months_14}} מתוך 14 חודשים או {{qualify_full_months_22}} מתוך 22 חודשי ביטוח שקדמו **ליום הקובע שלך** — יום הפסקת העבודה שלך, שהוא מאוחר מיום הלידה. זו טעות נפוצה בחישוב.",
       "requires_doc": false,
+      "links": [
+        {
+          "label": "תנאי הזכאות לדמי לידה לאב/בן זוג",
+          "url": "https://www.btl.gov.il/benefits/maternity/dmeLedaLaav/Pages/tnaey%20zakaoot%20ledmeyleda%20laav.aspx",
+          "kind": "info"
+        }
+      ],
       "critical": true
     },
     {
@@ -266,7 +334,14 @@
       "title": "אישור מעסיק — החלק שממלא HR",
       "body": "חלק בטופס שממולא על ידי משאבי אנוש. כדאי לבקש מוקדם, זה צוואר הבקבוק הנפוץ.",
       "requires_doc": true,
-      "doc_hint": "חלק המעסיק בטופס 360"
+      "doc_hint": "חלק המעסיק בטופס 360",
+      "links": [
+        {
+          "label": "טופס 360 — חלק המעסיק (PDF)",
+          "url": "https://www.btl.gov.il/%D7%98%D7%A4%D7%A1%D7%99%D7%9D%20%D7%95%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%D7%9D/Documents/t360.pdf",
+          "kind": "form"
+        }
+      ]
     },
     {
       "key": "form_360_partner_return",
@@ -308,6 +383,18 @@
       "title": "הגשת טופס 360 בפועל",
       "body": "לא יאוחר מ-{{form_360_deadline_months}} חודשים מיום הפסקת העבודה. עדיף בסמיכות להגשת טופס 355.",
       "requires_doc": false,
+      "links": [
+        {
+          "label": "שליחת התביעה והמסמכים באתר",
+          "url": "https://b2b.btl.gov.il/BTL.ILG.Payments/DocumentsInfo.aspx",
+          "kind": "online"
+        },
+        {
+          "label": "אופן הגשת התביעה לאב — ביטוח לאומי",
+          "url": "https://www.btl.gov.il/benefits/maternity/dmeLedaLaav/Pages/hagashat%20tviha.aspx",
+          "kind": "info"
+        }
+      ],
       "date_rule": {
         "anchor": "partner_work_stop",
         "offset_months": 12,
@@ -339,6 +426,18 @@
       "title": "מענק לידה — לוודא הגעה לחשבון",
       "body": "משולם אוטומטית ליולדת אחרי דיווח בית החולים לביטוח לאומי, ללא תלות בהכנסה או בסוג ההעסקה. ילד ראשון {{birth_grant_first_child}} ₪; תאומים {{birth_grant_twins}} ₪. לא דורש הגשה — רק לוודא שהגיע.",
       "requires_doc": false,
+      "links": [
+        {
+          "label": "סכומי מענק הלידה — ביטוח לאומי",
+          "url": "https://www.btl.gov.il/benefits/maternity/maanakleda/Pages/ShiurMaanakLeda.aspx",
+          "kind": "info"
+        },
+        {
+          "label": "טופס 300 — תביעה למענק לידה (אם לא הגיע)",
+          "url": "https://www.btl.gov.il/%D7%98%D7%A4%D7%A1%D7%99%D7%9D%20%D7%95%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%D7%9D/Documents/T300.pdf",
+          "kind": "form"
+        }
+      ],
       "date_rule": {
         "anchor": "birth_date",
         "offset_days": 30,
@@ -368,6 +467,13 @@
       "title": "לא לעבוד בתקופת דמי הלידה — כולל לא מהבית",
       "body": "הסיכון הוא **אובדן מלוא דמי הלידה לתקופה**, ויש תקדים משפטי. גם חלקית, גם מהבית. זה גם אסור על המעסיק לפי חוק עבודת נשים. לעצמאי/ת — החריג היחיד הוא אישור תחזוקה שהתקבל **מראש**.",
       "requires_doc": false,
+      "links": [
+        {
+          "label": "דמי לידה — ביטוח לאומי",
+          "url": "https://www.btl.gov.il/benefits/maternity/Childbirth_Allowance/Pages/default.aspx",
+          "kind": "info"
+        }
+      ],
       "critical": true
     },
     {
@@ -449,6 +555,13 @@
       "title": "עדכון נקודות זיכוי במס",
       "body": "בדרך כלל מתעדכנות אוטומטית מחודש הלידה. לוודא מול רו\"ח או HR שהניכוי בתלוש אכן השתנה.",
       "requires_doc": false,
+      "links": [
+        {
+          "label": "טופס 101 מקוון — כרטיס עובד ובקשה להקלה במס",
+          "url": "https://www.gov.il/he/service/itc101",
+          "kind": "online"
+        }
+      ],
       "date_rule": {
         "anchor": "birth_date",
         "offset_months": 2,
@@ -463,7 +576,14 @@
       "optional": true,
       "title": "לדעת: איך ממוסים דמי הלידה",
       "body": "מהסכום מנוכים ביטוח לאומי, ביטוח בריאות ומס הכנסה. **המס מחושב בנפרד משאר ההכנסה השנתית** ולא בהכרח לפי המדרגה השולית הרגילה — שווה בדיקה בהחזר מס בסוף השנה.",
-      "requires_doc": false
+      "requires_doc": false,
+      "links": [
+        {
+          "label": "עריכת תיאום מס מקוון — רשות המסים",
+          "url": "https://www.gov.il/he/service/tax-coordination-online",
+          "kind": "online"
+        }
+      ]
     },
     {
       "key": "municipal_discounts",
@@ -474,6 +594,28 @@
       "title": "הנחות ארנונה ומים ברשות המקומית",
       "body": "רישום ילד חדש עשוי לזכות בהנחה. משתנה בין רשויות — לבדוק באתר הרשות.",
       "requires_doc": false
+    },
+    {
+      "key": "water_corp_persons_update",
+      "phase": "after_return",
+      "role": "shared",
+      "sort": 625,
+      "title": "לעדכן את תאגיד המים במספר הנפשות בבית",
+      "body": "כל נפש רשומה מזכה ב-{{water_quota_per_person_month}} מ\"ק מים לחודש בתעריף הנמוך — {{water_quota_per_person_period}} מ\"ק לתקופת חיוב של חודשיים. כל צריכה מעבר לכמות המוכרת מחויבת בתעריף הגבוה. **צרכן שלא הגיש הצהרה על מספר נפשות מחויב לפי 2 נפשות בלבד**, גם אם בפועל גרים בבית יותר. מגישים לתאגיד המים של הרשות הצהרה על מספר נפשות בצירוף צילום ספח תעודת זהות שהתינוק רשום בו.",
+      "requires_doc": true,
+      "doc_hint": "צילום ספח תעודת זהות מעודכן + אישור התאגיד על העדכון",
+      "links": [
+        {
+          "label": "תעריפי מים וביוב — רשות המים",
+          "url": "https://www.gov.il/he/departments/publications/reports/rates_general1",
+          "kind": "info"
+        }
+      ],
+      "date_rule": {
+        "anchor": "birth_date",
+        "offset_weeks": 4,
+        "kind": "due"
+      }
     },
     {
       "key": "rehab_dept_grants",

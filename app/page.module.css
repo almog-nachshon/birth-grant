@@ -181,6 +181,11 @@
   color: var(--ink-soft);
 }
 .footerGrid { display: flex; justify-content: space-between; gap: 28px; flex-wrap: wrap; }
+/* גרסת הקטלוג בכותרת התחתונה: מי שמסתמך על מספר רוצה לדעת מתי נבדק. */
+.version { margin-top: 26px; font-size: 13px; color: var(--ink-faint); }
+.version a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--line); }
+.version a:hover { color: var(--ink); border-color: var(--accent); }
+
 .disclaimer {
   margin-top: 26px;
   padding-top: 22px;

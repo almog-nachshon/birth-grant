@@ -88,6 +88,7 @@ if (vErr) die('יצירת גרסת קטלוג', vErr);
     body: t.body ?? null,
     requires_doc: t.requires_doc ?? false,
     doc_hint: t.doc_hint ?? null,
+    links: t.links ?? [],
     form_ref: t.form_ref ?? null,
     source_url: t.source_url ?? null,
     critical: t.critical ?? false,

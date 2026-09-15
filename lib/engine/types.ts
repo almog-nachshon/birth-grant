@@ -57,6 +57,18 @@ export interface CaseProfile {
 
 export type RateMap = Record<string, number | null>;
 
+/**
+ * קישור רשמי שמצורף למשימה.
+ *   online — טופס שאפשר למלא ולשלוח ישירות באינטרנט
+ *   form   — טופס PDF להורדה ומילוי ידני
+ *   info   — דף הסבר רשמי
+ */
+export interface TaskLink {
+  label: string;
+  url: string;
+  kind: 'online' | 'form' | 'info';
+}
+
 export interface ScheduleEntry {
   key: string;
   label: string;

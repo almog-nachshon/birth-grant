@@ -3,11 +3,19 @@
 import { useRef, useState } from 'react';
 import s from './case.module.css';
 
+interface TaskLink {
+  label: string;
+  url: string;
+  kind: 'online' | 'form' | 'info';
+}
+
 interface Task {
   id: string;
   title: string;
   body: string | null;
   requires_doc: boolean;
+  doc_hint: string | null;
+  links: TaskLink[] | null;
   status: 'todo' | 'in_progress' | 'done' | 'not_relevant';
   due_at: string | null;
   due_kind: string | null;
@@ -21,6 +29,13 @@ interface Doc {
   storage_path: string;
   size_bytes: number;
 }
+
+/** תווית קצרה לפי סוג הקישור, כדי שיהיה ברור מראש מה נפתח בלחיצה. */
+const LINK_KIND: Record<TaskLink['kind'], string> = {
+  online: 'מקוון',
+  form: 'PDF',
+  info: 'מידע',
+};
 
 const MAX_BYTES = 15 * 1024 * 1024;
 const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png', 'image/heic', 'image/webp'];
@@ -190,6 +205,28 @@ export default function TaskList({
                   </div>
 
                   {task.body && <p className={s.taskBody}>{stripMarkdown(task.body)}</p>}
+
+                  {task.requires_doc && task.doc_hint && (
+                    <p className={s.docHint}>לצרף: {task.doc_hint}</p>
+                  )}
+
+                  {task.links && task.links.length > 0 && (
+                    <div className={s.links}>
+                      {task.links.map((l) => (
+                        <a
+                          key={`${l.kind}-${l.url}`}
+                          href={l.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={s.linkChip}
+                          data-kind={l.kind}
+                        >
+                          <span className={s.linkKind}>{LINK_KIND[l.kind]}</span>
+                          {l.label}
+                        </a>
+                      ))}
+                    </div>
+                  )}
 
                   {taskDocs.length > 0 && (
                     <div className={s.docs}>

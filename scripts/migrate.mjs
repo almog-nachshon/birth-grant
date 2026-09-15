@@ -5,33 +5,12 @@
 // עדיף על העתקה ידנית ל-SQL Editor: הסדר נאכף, שגיאה עוצרת מיד,
 // וכישלון באמצע קובץ מתגלגל אחורה במקום להשאיר סכמה חצי-בנויה.
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import pg from 'pg';
 
-if (!existsSync('.env.local')) {
-  console.error('.env.local לא קיים');
-  process.exit(1);
-}
+import { connectionString, pgOptions } from './env.mjs';
 
-const env = {};
-for (const line of readFileSync('.env.local', 'utf8').split('\n')) {
-  const t = line.trim();
-  if (!t || t.startsWith('#')) continue;
-  const eq = t.indexOf('=');
-  if (eq === -1) continue;
-  env[t.slice(0, eq).trim()] = t.slice(eq + 1).trim().replace(/^["']|["']$/g, '');
-}
-
-// חיבור ישיר ולא דרך ה-pooler: DDL לא עובד טוב מול pgbouncer
-let conn = env.POSTGRES_URL_NON_POOLING || env.POSTGRES_URL;
-if (!conn) {
-  console.error('חסרה מחרוזת חיבור (POSTGRES_URL_NON_POOLING) ב-.env.local');
-  process.exit(1);
-}
-
-// pg v8.16+ מפרש sslmode=require כ-verify-full, ותעודות Supabase חתומות
-// בשורש עצמי. מסירים את הפרמטר ומגדירים SSL מפורשות למטה.
-conn = conn.replace(/[?&]sslmode=[^&]*/g, (m) => (m[0] === '?' ? '?' : '')).replace(/\?$/, '');
+const conn = connectionString();
 
 const ALL = [
   'supabase/migrations/001_schema.sql',
@@ -41,6 +20,7 @@ const ALL = [
   'supabase/migrations/005_profile_contact.sql',
   'supabase/migrations/006_fix_case_insert.sql',
   'supabase/migrations/007_self_employed_status.sql',
+  'supabase/migrations/008_task_links.sql',
 ];
 
 // הרצה חלקית: npm run migrate -- 004
@@ -56,7 +36,7 @@ if (!FILES.length) {
   process.exit(1);
 }
 
-const client = new pg.Client({ connectionString: conn, ssl: { rejectUnauthorized: false } });
+const client = new pg.Client(pgOptions(conn));
 
 try {
   await client.connect();

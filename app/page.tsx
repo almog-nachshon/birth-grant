@@ -1,5 +1,6 @@
 import AccountButton from './AccountButton';
 import s from './page.module.css';
+import { catalogVersion, lastChanged, formatDate } from '@/lib/changelog';
 
 export default function Landing() {
   return (
@@ -211,12 +212,17 @@ export default function Landing() {
               <p style={{ fontSize: 14 }}>מימוש זכויות הורות בישראל</p>
             </div>
             <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+              <a href="/changelog" className={s.navLink} style={{ padding: 0 }}>מה חדש</a>
               <a href="/privacy" className={s.navLink} style={{ padding: 0 }}>מדיניות פרטיות</a>
               <a href="/terms" className={s.navLink} style={{ padding: 0 }}>תנאי שימוש</a>
               <a href="/guides" className={s.navLink} style={{ padding: 0 }}>מדריכים</a>
               <a href="/contact" className={s.navLink} style={{ padding: 0 }}>יצירת קשר</a>
             </div>
           </div>
+          <p className={s.version}>
+            קטלוג הזכויות גרסה {catalogVersion} · עודכן ב-{formatDate(lastChanged)} ·{' '}
+            <a href="/changelog">מה השתנה</a>
+          </p>
           <p className={s.disclaimer}>
             האתר הוא כלי מידע וארגון, ואינו מהווה ייעוץ משפטי, פיננסי או מס. הסכומים והכללים
             מבוססים על מקורות פומביים ומתעדכנים מעת לעת, ועשויים להשתנות או לא לחול על מקרה מסוים.

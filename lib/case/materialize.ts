@@ -7,7 +7,7 @@
 //   · משימה שכבר לא רלוונטית — נמחקת רק אם איש לא נגע בה
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { resolveTasks, type CatalogTask } from '@/lib/engine/resolve-tasks';
+import { resolveTasks, type CatalogTask, type TaskLink } from '@/lib/engine/resolve-tasks';
 import { ratesAt, interpolate } from '@/lib/rates';
 import catalog from '@/content/catalog.json';
 import type { CaseProfile, ParentRole } from '@/lib/engine/types';
@@ -16,6 +16,19 @@ export interface SyncResult {
   added: number;
   updated: number;
   removed: number;
+}
+
+/**
+ * השוואת קישורים שדה-אחר-שדה ולא לפי JSON.stringify:
+ * jsonb ב-Postgres לא משמר את סדר המפתחות, ולכן טקסט מול טקסט היה
+ * מדווח על שינוי בכל טעינה ומייצר כתיבה מיותרת.
+ */
+function sameLinks(a: TaskLink[] | null | undefined, b: TaskLink[]): boolean {
+  const left = a ?? [];
+  if (left.length !== b.length) return false;
+  return left.every(
+    (l, i) => l.label === b[i].label && l.url === b[i].url && l.kind === b[i].kind,
+  );
 }
 
 /** שם להצגה לכל הורה, לשיוך משימות שמופיעות לשניהם. */
@@ -46,6 +59,8 @@ export async function syncCaseTasks(
             t.role === 'any' && t.assignedRole ? `${t.title} — ${labelFor(t.assignedRole)}` : t.title,
           body: t.body ? interpolate(t.body, rates) : null,
           requires_doc: t.requires_doc ?? false,
+          doc_hint: t.doc_hint ?? null,
+          links: t.links ?? [],
           due_at: t.dueAt,
           due_kind: t.date_rule?.kind ?? null,
           sort: i,
@@ -56,7 +71,9 @@ export async function syncCaseTasks(
 
   const { data: existingRows } = await supabase
     .from('case_tasks')
-    .select('id, catalog_key, status, note, is_custom, title, body, requires_doc, due_at, due_kind, sort')
+    .select(
+      'id, catalog_key, status, note, is_custom, title, body, requires_doc, doc_hint, links, due_at, due_kind, sort',
+    )
     .eq('case_id', caseId);
 
   const existing = existingRows ?? [];
@@ -85,6 +102,8 @@ export async function syncCaseTasks(
       row.title === want.title &&
       row.body === want.body &&
       row.requires_doc === want.requires_doc &&
+      row.doc_hint === want.doc_hint &&
+      sameLinks(row.links as TaskLink[] | null, want.links) &&
       row.due_at === want.due_at &&
       row.due_kind === want.due_kind &&
       row.sort === want.sort;
@@ -96,6 +115,8 @@ export async function syncCaseTasks(
         title: want.title,
         body: want.body,
         requires_doc: want.requires_doc,
+        doc_hint: want.doc_hint,
+        links: want.links,
         due_at: want.due_at,
         due_kind: want.due_kind,
         sort: want.sort,

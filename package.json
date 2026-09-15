@@ -8,12 +8,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test lib/engine/*.test.ts",
+    "test": "node --test lib/engine/*.test.ts lib/ai/*.test.ts",
     "validate:content": "node content/validate.mjs",
     "check": "npm run validate:content && npm run test",
     "check:env": "node scripts/check-env.mjs",
     "seed": "node --env-file=.env.local scripts/seed.mjs",
-    "migrate": "node scripts/migrate.mjs"
+    "migrate": "node scripts/migrate.mjs",
+    "backfill:links": "node scripts/backfill-task-links.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",

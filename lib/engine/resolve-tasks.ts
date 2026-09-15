@@ -3,8 +3,10 @@
 // מתבצע פעם אחת ונשמר (materialized), לא מחושב בכל טעינה — כדי שסטטוסים
 // והערות ישרדו פרסום גרסת קטלוג חדשה, ושנוכל להראות "נוספו לך משימות".
 
-import type { CaseProfile, PersonProfile, RateMap } from './types.ts';
+import type { CaseProfile, PersonProfile, RateMap, TaskLink } from './types.ts';
 import { resolveTaskDate } from './schedule.ts';
+
+export type { TaskLink };
 
 export interface CatalogTask {
   key: string;
@@ -14,6 +16,7 @@ export interface CatalogTask {
   body?: string;
   requires_doc?: boolean;
   doc_hint?: string;
+  links?: TaskLink[];
   form_ref?: string;
   source_url?: string;
   critical?: boolean;

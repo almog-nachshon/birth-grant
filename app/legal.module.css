@@ -8,3 +8,21 @@
 .page ul { font-size: 15.5px; color: var(--ink-soft); padding-inline-start: 22px; margin-bottom: 12px; }
 .page li { margin-bottom: 7px; }
 .page strong { color: var(--ink); }
+
+/* ── יומן שינויים ── */
+.entry { border-top: 1px solid var(--line); padding-top: 22px; margin-top: 26px; }
+.entry:first-of-type { border-top: none; padding-top: 0; }
+.entryHead {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 14px; flex-wrap: wrap;
+}
+.entryHead h2 { margin: 0; }
+.entryMeta {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-size: 13px; color: var(--ink-faint); white-space: nowrap;
+}
+.badge {
+  font-size: 12px; padding: 2px 9px; border-radius: 20px;
+  background: var(--accent-bg); color: var(--accent);
+}
+.entry ul { margin-top: 12px; }

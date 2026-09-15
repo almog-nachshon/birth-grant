@@ -221,6 +221,22 @@
       "unit": "years",
       "effective_from": "2020-01-01",
       "label": "גיל ילד מקסימלי לתוספת אגף השיקום"
+    },
+    {
+      "key": "water_quota_per_person_month",
+      "value": 3.5,
+      "unit": "m3",
+      "effective_from": "2016-01-01",
+      "label": "כמות מים מוכרת — מ\"ק לנפש לחודש",
+      "confidence": "verified"
+    },
+    {
+      "key": "water_quota_per_person_period",
+      "value": 7,
+      "unit": "m3",
+      "effective_from": "2016-01-01",
+      "label": "כמות מים מוכרת — מ\"ק לנפש לתקופת חיוב (חודשיים)",
+      "confidence": "verified"
     }
   ]
 }

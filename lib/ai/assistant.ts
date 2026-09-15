@@ -4,17 +4,23 @@
 // בוחר מתי לא — ואז הוא עונה מהזיכרון. הזרקה מראש מבטיחה שהמספרים תמיד שם.
 
 import { anthropic, BASE_SYSTEM, MODEL } from './client.ts';
-import type { EntitlementResult, ScheduleEntry } from '../engine/types.ts';
+import type { EntitlementResult, ScheduleEntry, TaskLink } from '../engine/types.ts';
 
 export interface AssistantContext {
   entitlements: EntitlementResult;
   schedule: ScheduleEntry[];
-  openTasks: { title: string; dueAt: string | null; critical: boolean }[];
+  openTasks: { title: string; dueAt: string | null; critical: boolean; links: TaskLink[] }[];
   /** נושאים שהמחקר סימן כלא-מאומתים — המודל חייב להצהיר עליהם */
   unresolvedTopics: string[];
 }
 
 const ils = (n: number) => n.toLocaleString('he-IL', { maximumFractionDigits: 0 });
+
+const LINK_KIND: Record<TaskLink['kind'], string> = {
+  online: 'מילוי מקוון',
+  form: 'טופס PDF',
+  info: 'דף הסבר',
+};
 
 /** בונה את בלוק העובדות. זה המקור היחיד למספרים שהמודל רשאי לצטט. */
 export function buildFactsBlock(ctx: AssistantContext): string {
@@ -28,8 +34,16 @@ export function buildFactsBlock(ctx: AssistantContext): string {
 
   const dates = ctx.schedule.map((e) => `  - ${e.label}: ${e.date}`).join('\n');
 
+  // הקישורים מגיעים מהקטלוג דרך שורת המשימה — לא מהמודל. זו רשימת
+  // ההיתר היחידה שלו, ולכן היא נכתבת כאן במפורש ולא נרמזת.
   const tasks = ctx.openTasks
-    .map((t) => `  - ${t.title}${t.dueAt ? ` (עד ${t.dueAt})` : ''}${t.critical ? ' [קריטי]' : ''}`)
+    .map((t) => {
+      const head = `  - ${t.title}${t.dueAt ? ` (עד ${t.dueAt})` : ''}${t.critical ? ' [קריטי]' : ''}`;
+      const links = t.links
+        .map((l) => `\n      · ${LINK_KIND[l.kind]} — ${l.label}: ${l.url}`)
+        .join('');
+      return head + links;
+    })
     .join('\n');
 
   return `<facts>
@@ -49,7 +63,8 @@ ${tasks || '  אין'}
 ${ctx.unresolvedTopics.map((t) => `  - ${t}`).join('\n') || '  אין'}
 </facts>
 
-כל מספר בתשובתך חייב להופיע בבלוק למעלה. אין מספר מתאים — אמור/י שהוא לא חושב ומה חסר.`;
+כל מספר בתשובתך חייב להופיע בבלוק למעלה. אין מספר מתאים — אמור/י שהוא לא חושב ומה חסר.
+כך גם לקישורים: מותר לצטט רק כתובת שמופיעה בבלוק למעלה, מילה במילה. אין כתובת מתאימה — הפנה/י לביטוח לאומי (*6050) או לאתר הרשות הרלוונטית בלי להמציא כתובת.`;
 }
 
 export function streamAssistantReply(

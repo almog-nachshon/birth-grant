@@ -5,7 +5,7 @@ import { calculateEntitlements } from '@/lib/engine/entitlements';
 import { buildSchedule } from '@/lib/engine/schedule';
 import { ratesAt } from '@/lib/rates';
 import { streamAssistantReply, type AssistantContext } from '@/lib/ai/assistant';
-import type { CaseProfile, EmploymentType } from '@/lib/engine/types';
+import type { CaseProfile, EmploymentType, TaskLink } from '@/lib/engine/types';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -58,7 +58,11 @@ export async function POST(request: NextRequest) {
   const [{ data: caseRow }, { data: persons }, { data: tasks }] = await Promise.all([
     supabase.from('cases').select('*').eq('id', caseId).single(),
     supabase.from('case_persons').select('*').eq('case_id', caseId),
-    supabase.from('case_tasks').select('title, due_at, status').eq('case_id', caseId).order('due_at'),
+    supabase
+      .from('case_tasks')
+      .select('title, due_at, status, links')
+      .eq('case_id', caseId)
+      .order('due_at'),
   ]);
   if (!caseRow) return NextResponse.json({ error: 'אין תיק' }, { status: 404 });
 
@@ -84,7 +88,12 @@ export async function POST(request: NextRequest) {
     openTasks: (tasks ?? [])
       .filter((t) => t.status !== 'done')
       .slice(0, 25)
-      .map((t) => ({ title: t.title, dueAt: t.due_at, critical: false })),
+      .map((t) => ({
+        title: t.title,
+        dueAt: t.due_at,
+        critical: false,
+        links: (t.links ?? []) as TaskLink[],
+      })),
     unresolvedTopics: UNRESOLVED,
   };
 

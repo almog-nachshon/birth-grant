@@ -74,6 +74,24 @@
 }
 .docChip:hover { color: var(--ink); border-color: var(--accent); }
 
+.docHint { font-size: 12.5px; color: var(--ink-soft); margin-top: 6px; }
+
+/* טפסים וקישורים רשמיים. הסוג מודגש לפני התווית — טופס מקוון ו-PDF
+   דורשים מהמשתמש דברים שונים לגמרי, וכדאי שיֵדע לפני הלחיצה. */
+.links { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.linkChip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 5px 11px; font-size: 12.5px; color: var(--ink-soft); text-decoration: none;
+}
+.linkChip:hover { color: var(--ink); border-color: var(--accent); }
+.linkChip[data-kind='online'] { border-color: var(--accent); color: var(--accent); }
+.linkKind {
+  font-size: 11px; padding: 1px 6px; border-radius: 20px;
+  background: var(--warm-bg); color: var(--warm);
+}
+.linkChip[data-kind='online'] .linkKind { background: var(--accent-bg); color: var(--accent); }
+
 .taskActions { margin-top: 10px; }
 .uploadBtn {
   display: inline-block; font-size: 13px; color: var(--accent);

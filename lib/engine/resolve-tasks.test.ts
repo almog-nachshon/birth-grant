@@ -177,3 +177,23 @@ test('שני הורים שכירים מקבלים כל אחד את משימות 
   assert.equal(hr.length, 2);
   assert.deepEqual(hr.map((t) => t.assignedRole).sort(), ['birthing_parent', 'partner']);
 });
+
+test('משימת עדכון הנפשות בתאגיד המים מגיעה לכל תיק', () => {
+  const water = resolveTasks(CATALOG, profile(), RATES).filter(
+    (t) => t.key === 'water_corp_persons_update',
+  );
+  assert.equal(water.length, 1, 'משימה משותפת — פעם אחת בלבד');
+  assert.ok(water[0].requires_doc, 'צריך את ספח תעודת הזהות');
+  assert.ok(water[0].dueAt, 'יש תאריך יעד נגזר מהלידה');
+});
+
+test('הקישורים הרשמיים עוברים מהקטלוג למשימה הגזורה', () => {
+  const tasks = resolveTasks(CATALOG, profile(), RATES);
+  const form355 = tasks.find((t) => t.key === 'form_355_fill');
+  assert.ok(form355?.links?.some((l) => l.kind === 'online'), 'לטופס 355 יש מילוי מקוון');
+  assert.ok(form355?.links?.some((l) => l.kind === 'form'), 'ולטופס 355 יש גם PDF');
+
+  const all = tasks.flatMap((t) => t.links ?? []);
+  assert.ok(all.length > 0);
+  assert.ok(all.every((l) => l.url.startsWith('https://')), 'קישור לא מאובטח בקטלוג');
+});
